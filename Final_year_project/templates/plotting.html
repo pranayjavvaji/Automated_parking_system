@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Space Selector - RTSP Stream</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; padding: 20px; }
+        .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
+        h1 { text-align: center; padding: 25px; background: linear-gradient(90deg, #667eea, #764ba2); color: white; margin-bottom: 20px; }
+        
+        .upload-section { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; padding: 20px; background: #f8f9fa; border-bottom: 2px solid #e9ecef; }
+        .upload-section input { padding: 10px 15px; border: 2px solid #667eea; border-radius: 8px; background: white; min-width: 120px; flex: 1; }
+        .upload-section button { padding: 10px 25px; background: linear-gradient(90deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: transform 0.2s; white-space: nowrap; }
+        .upload-section button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
+        
+        .main-content { display: flex; padding: 20px; gap: 30px; min-height: 600px; }
+        .image-container { flex: 3; position: relative; border: 2px solid #e9ecef; border-radius: 10px; padding: 15px; background: #f8f9fa; }
+        .instructions { text-align: center; margin-bottom: 15px; color: #6c757d; font-style: italic; }
+        #imageCanvas { width: 100%; height: 500px; border: 2px solid #ced4da; border-radius: 8px; background: white; cursor: crosshair; display: block; }
+        .coordinates-display { margin-top: 20px; padding: 15px; background: white; border-radius: 8px; border: 1px solid #dee2e6; min-height: 80px; }
+        
+        .controls { flex: 1; min-width: 300px; }
+        #spacesList { max-height: 400px; overflow-y: auto; margin-bottom: 20px; padding: 10px; background: white; border-radius: 8px; border: 1px solid #dee2e6; }
+        
+        .space-item { padding: 10px; margin: 5px 0; background: #e7f3ff; border-radius: 5px; border-left: 4px solid #667eea; }
+        .space-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .space-item h4 { color: #495057; margin-bottom: 5px; }
+        .space-item p { font-size: 12px; color: #6c757d; margin: 3px 0; }
+        
+        .output-section { background: white; padding: 20px; border-radius: 10px; border: 1px solid #dee2e6; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        #jsonOutput { width: 100%; padding: 15px; border: 2px solid #e9ecef; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 12px; background: #f8f9fa; resize: vertical; margin: 15px 0; }
+        
+        .db-section { display: flex; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid #dee2e6; }
+        .db-section button { padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; flex: 1; transition: background 0.3s; }
+        .db-section button:hover { background: #218838; }
+        #copyBtn { background: #17a2b8; }
+        #copyBtn:hover { background: #138496; }
+        #loadFromDbBtn { background: linear-gradient(90deg, #36d1dc, #5b86e5); }
+        
+        /* Edit and Delete Buttons */
+        .edit-name-btn, .delete-space-btn { background: none; border: none; cursor: pointer; font-size: 16px; padding: 4px; border-radius: 4px; transition: background-color 0.2s; margin-left: 5px; }
+        .edit-name-btn:hover { background-color: rgba(0,0,0,0.1); }
+        .delete-space-btn:hover { background-color: rgba(255,0,0,0.1); color: red; }
+        
+        .name-input { padding: 8px; border: 1px solid #ddd; border-radius: 4px; margin-right: 5px; font-size: 14px; width: 60%; }
+        .save-name-btn { background-color: #28a745; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px; font-size: 12px; }
+        .cancel-name-btn { background-color: #6c757d; color: white; border: none; padding: 6px 10px; border-radius: 4px; cursor: pointer; font-size: 12px; }
+        
+        .info-section { background: #f8f9fa; padding: 25px; border-top: 2px solid #e9ecef; margin-top: 20px; }
+        .point-coord { margin: 5px 0; padding: 5px; background: #f8f9fa; border-radius: 4px; border-left: 3px solid #667eea; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vehicle Space Selector - RTSP Stream</h1>
+        <div style="text-align: right; margin-bottom: 10px;">
+            <a href="/cameras" style="text-decoration: none; color: #667eea; font-weight: bold;">← Back to Cameras</a>
+        </div>
+        
+        <div class="upload-section">
+            <input type="text" id="dvrName" placeholder="DVR Name (e.g., Building_A)">
+            <input type="text" id="streamUrl" placeholder="SmartPSS URL">
+            <input type="number" id="channelNumber" placeholder="Channel" min="1" max="8">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            
+            <button id="captureBtn">Capture Frame</button>
+            <button id="resetBtn">Reset All</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="image-container">
+                <div class="instructions">
+                    <p>Enter details above, click "Capture Frame", then draw rectangles.</p>
+                </div>
+                <canvas id="imageCanvas"></canvas>
+                <div class="coordinates-display" id="coordinatesDisplay">
+                    <h4>Status:</h4>
+                    <div class="point-coord">Ready...</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h3>Spaces</h3>
+                <div id="spacesList"></div>
+                
+                <div class="output-section">
+                    <h3>Database & Export</h3>
+                    <textarea id="jsonOutput" readonly rows="8"></textarea>
+                    
+                    <div class="db-section">
+                        <button id="saveToDbBtn">Save to DB</button>
+                        <button id="loadFromDbBtn">Load from DB</button>
+                        <button id="copyBtn">Copy JSON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h3>Instructions:</h3>
+            <ol style="margin-left: 20px; color: #555;">
+                <li>Fill in DVR Name, URL, Channel, Username, Password.</li>
+                <li>Click <b>Capture Frame</b>.</li>
+                <li>Draw rectangles on the image.</li>
+                <li>Use ✏️ to rename or 🗑️ to delete a space.</li>
+                <li>Click <b>Save to DB</b> to update the database.</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        class ImagePointSelector {
+            constructor() {
+                this.canvas = document.getElementById('imageCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.spaces = [];
+                this.currentImage = null;
+                this.imageScale = 1;
+                this.canvasRect = null;
+                
+                // Drawing state
+                this.isDrawing = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.currentX = 0;
+                this.currentY = 0;
+                this.tempRect = null;
+                
+                this.initializeEventListeners();
+                
+                window.addEventListener('resize', () => { this.canvasRect = null; });
+            }
+            
+            initializeEventListeners() {
+                // Capture Frame
+                document.getElementById('captureBtn').addEventListener('click', async () => {
+                    await this.captureFrameFromStream();
+                });
+                
+                // Canvas Drawing
+                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
+                this.canvas.addEventListener('mousemove', (e) => this.drawing(e));
+                this.canvas.addEventListener('mouseup', (e) => this.stopDrawing(e));
+                this.canvas.addEventListener('mouseleave', () => {
+                    if (this.isDrawing) {
+                        this.isDrawing = false;
+                        this.tempRect = null;
+                        this.drawImage();
+                    }
+                });
+                
+                // Buttons
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    if(confirm("Delete all spaces?")) this.resetSpaces();
+                });
+                
+                document.getElementById('saveToDbBtn').addEventListener('click', () => {
+                    this.saveToDatabase();
+                });
+                
+                document.getElementById('loadFromDbBtn').addEventListener('click', () => {
+                    this.loadFromDatabase();
+                });
+                
+                document.getElementById('copyBtn').addEventListener('click', () => {
+                    this.copyJSON();
+                });
+            }
+
+            // ------------------------------------------------------------------
+            // CORE DRAWING FUNCTIONS
+            // ------------------------------------------------------------------
+            startDrawing(e) {
+                if (!this.currentImage) { alert('Please capture a frame first'); return; }
+                const coords = this.getCanvasCoordinates(e);
+                this.startX = coords.canvasX;
+                this.startY = coords.canvasY;
+                this.isDrawing = true;
+            }
+            
+            drawing(e) {
+                if (!this.isDrawing) return;
+                const coords = this.getCanvasCoordinates(e);
+                this.currentX = coords.canvasX;
+                this.currentY = coords.canvasY;
+                
+                const x = Math.min(this.startX, this.currentX);
+                const y = Math.min(this.startY, this.currentY);
+                const width = Math.abs(this.currentX - this.startX);
+                const height = Math.abs(this.currentY - this.startY);
+                
+                this.tempRect = { x, y, width, height };
+                this.drawImage();
+            }
+            
+            stopDrawing(e) {
+                if (!this.isDrawing) return;
+                this.isDrawing = false;
+                
+                if (this.tempRect && this.tempRect.width > 10 && this.tempRect.height > 10) {
+                    this.addSpace(this.tempRect);
+                }
+                this.tempRect = null;
+                this.drawImage();
+            }
+            
+            addSpace(rect) {
+                const colors = ['#2ed573', '#1e90ff', '#ff6b81', '#ffa502', '#7bed9f'];
+                const newSpace = {
+                    id: Date.now(),
+                    name: `Space ${this.spaces.length + 1}`,
+                    rect: { ...rect }, // Store as internal canvas coordinates
+                    color: colors[this.spaces.length % colors.length]
+                };
+                this.spaces.push(newSpace);
+                this.updateSpacesList();
+                this.updateJSONOutput();
+            }
+
+            deleteSpace(id) {
+                if(confirm("Delete this space?")) {
+                    this.spaces = this.spaces.filter(s => s.id !== id);
+                    this.updateSpacesList();
+                    this.updateJSONOutput();
+                    this.drawImage();
+                }
+            }
+
+            // ------------------------------------------------------------------
+            // RENDERING
+            // ------------------------------------------------------------------
+            drawImage() {
+                if (!this.currentImage) return;
+                
+                // Clear and draw background image
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                this.ctx.drawImage(this.currentImage, 0, 0, this.currentImage.width, this.currentImage.height, 0, 0, this.canvas.width, this.canvas.height);
+                
+                // Draw all saved spaces
+                this.spaces.forEach(space => {
+                    this.drawRect(space.rect, space.color, space.name);
+                });
+                
+                // Draw current dragging rectangle
+                if (this.tempRect) {
+                    this.drawRect(this.tempRect, '#ff0000', 'Drawing...');
+                }
+            }
+            
+            drawRect(rect, color, text) {
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 2;
+                this.ctx.beginPath();
+                this.ctx.rect(rect.x, rect.y, rect.width, rect.height);
+                this.ctx.stroke();
+                
+                // Fill slightly
+                this.ctx.fillStyle = color + "33"; // 20% opacity
+                this.ctx.fill();
+                
+                // Text label
+                if (text) {
+                    this.ctx.fillStyle = "white";
+                    this.ctx.font = "bold 12px Arial";
+                    this.ctx.shadowColor="black";
+                    this.ctx.shadowBlur=3;
+                    this.ctx.fillText(text, rect.x + 5, rect.y + 15);
+                    this.ctx.shadowBlur=0;
+                }
+            }
+
+            // ------------------------------------------------------------------
+            // UI UPDATES
+            // ------------------------------------------------------------------
+            updateSpacesList() {
+                const list = document.getElementById('spacesList');
+                list.innerHTML = '';
+                
+                this.spaces.forEach(space => {
+                    const item = document.createElement('div');
+                    item.className = 'space-item';
+                    item.innerHTML = `
+                        <div class="space-header">
+                            <h4>${space.name}</h4>
+                            <div>
+                                <button class="edit-name-btn" onclick="app.editName(${space.id})" title="Rename">✏️</button>
+                                <button class="delete-space-btn" onclick="app.deleteSpace(${space.id})" title="Delete">🗑️</button>
+                            </div>
+                        </div>
+                        <p>Area: ${Math.round(space.rect.width * space.rect.height)} px²</p>
+                        
+                        <div id="edit-form-${space.id}" style="display:none; margin-top:5px;">
+                            <input type="text" class="name-input" value="${space.name}">
+                            <button class="save-name-btn" onclick="app.saveName(${space.id})">Save</button>
+                            <button class="cancel-name-btn" onclick="app.cancelEdit(${space.id})">Cancel</button>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+            }
+            
+            updateJSONOutput() {
+                const output = {
+                    dvr_name: document.getElementById('dvrName').value,
+                    spaces_count: this.spaces.length,
+                    spaces: this.spaces.map(s => ({
+                        id: s.id,
+                        name: s.name,
+                        box: s.rect
+                    }))
+                };
+                document.getElementById('jsonOutput').value = JSON.stringify(output, null, 2);
+            }
+            
+            // ------------------------------------------------------------------
+            // DATABASE OPERATIONS (SAVE / LOAD)
+            // ------------------------------------------------------------------
+            async saveToDatabase() {
+                const dvrName = document.getElementById('dvrName').value;
+                const streamUrl = document.getElementById('streamUrl').value;
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const channel = parseInt(document.getElementById('channelNumber').value) || 1;
+
+                if (!dvrName) { alert("Please enter DVR Name"); return; }
+                if (this.spaces.length === 0) { alert("No spaces to save"); return; }
+
+                // Prepare data for Python API
+                const payload = {
+                    dvr_name: dvrName,
+                    stream_url: streamUrl,
+                    username: username,
+                    password: password,
+                    channel: channel,
+                    spaces: this.spaces.map(s => ({
+                        spaceId: s.id,
+                        spaceName: s.name,
+                        boundingBox: {
+                            x_min: Math.round(s.rect.x),
+                            y_min: Math.round(s.rect.y),
+                            x_max: Math.round(s.rect.x + s.rect.width),
+                            y_max: Math.round(s.rect.y + s.rect.height),
+                            width: Math.round(s.rect.width),
+                            height: Math.round(s.rect.height)
+                        },
+                        corners: [ // Simple 4 corners
+                            {x: s.rect.x, y: s.rect.y}, 
+                            {x: s.rect.x + s.rect.width, y: s.rect.y},
+                            {x: s.rect.x + s.rect.width, y: s.rect.y + s.rect.height},
+                            {x: s.rect.x, y: s.rect.y + s.rect.height}
+                        ],
+                        color: s.color
+                    }))
+                };
+
+                try {
+                    this.updateStatus("Saving to DB...");
+                    const res = await fetch('/api/save-config', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    const result = await res.json();
+                    
+                    if(result.success) {
+                        alert("✅ Saved successfully!");
+                        this.updateStatus("Saved to DB.");
+                    } else {
+                        alert("❌ Error: " + result.error);
+                    }
+                } catch(e) {
+                    console.error(e);
+                    alert("Connection failed.");
+                }
+            }
+            
+            async loadFromDatabase() {
+                const dvrName = document.getElementById('dvrName').value;
+                const channel = document.getElementById('channelNumber').value;
+                
+                if(!dvrName) { alert("Enter DVR Name to load."); return; }
+                
+                try {
+                    this.updateStatus("Loading from DB...");
+                    const res = await fetch('/api/load-config', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ dvr_name: dvrName, channel: channel })
+                    });
+                    const result = await res.json();
+                    
+                    if(result.success) {
+                        // Populate Inputs
+                        if(result.dvr_device) {
+                            document.getElementById('streamUrl').value = result.dvr_device.stream_url || '';
+                            document.getElementById('username').value = result.dvr_device.username || '';
+                        }
+                        
+                        // Populate Spaces
+                        this.spaces = (result.spaces || []).map(s => ({
+                            id: s.spaceId,
+                            name: s.spaceName,
+                            color: s.color || '#2ed573',
+                            rect: {
+                                x: s.boundingBox.x_min,
+                                y: s.boundingBox.y_min,
+                                width: s.boundingBox.width,
+                                height: s.boundingBox.height
+                            }
+                        }));
+                        
+                        this.updateSpacesList();
+                        this.updateJSONOutput();
+                        this.drawImage();
+                        alert(`Loaded ${this.spaces.length} spaces.`);
+                        this.updateStatus("Loaded from DB.");
+                    } else {
+                        alert("❌ Load failed: " + result.error);
+                    }
+                } catch(e) {
+                    console.error(e);
+                    alert("Connection failed.");
+                }
+            }
+
+            // ------------------------------------------------------------------
+            // HELPER FUNCTIONS
+            // ------------------------------------------------------------------
+            copyJSON() {
+                const txt = document.getElementById('jsonOutput');
+                txt.select();
+                document.execCommand('copy');
+                alert("JSON copied to clipboard!");
+            }
+            
+            updateStatus(msg) {
+                document.getElementById('coordinatesDisplay').innerHTML = `<h4>Status:</h4><div class="point-coord">${msg}</div>`;
+            }
+            
+            getCanvasCoordinates(e) {
+                const rect = this.canvas.getBoundingClientRect();
+                const scaleX = this.canvas.width / rect.width;
+                const scaleY = this.canvas.height / rect.height;
+                return {
+                    canvasX: (e.clientX - rect.left) * scaleX,
+                    canvasY: (e.clientY - rect.top) * scaleY
+                };
+            }
+
+            async captureFrameFromStream() {
+                const url = document.getElementById('streamUrl').value;
+                if(!url) { this.loadTestImage(); return; }
+                
+                this.updateStatus("Capturing...");
+                try {
+                    const res = await fetch('/capture-frame', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            url: url,
+                            channel: document.getElementById('channelNumber').value,
+                            username: document.getElementById('username').value,
+                            password: document.getElementById('password').value
+                        })
+                    });
+                    const data = await res.json();
+                    if(data.success) {
+                        this.loadImage(data.image);
+                        this.updateStatus("Frame Captured.");
+                    } else {
+                        alert("Capture failed: " + data.error);
+                        this.loadTestImage();
+                    }
+                } catch(e) {
+                    console.error(e);
+                    this.loadTestImage();
+                }
+            }
+            
+            loadImage(base64) {
+                const img = new Image();
+                img.onload = () => {
+                    this.currentImage = img;
+                    // Fit canvas to screen width while maintaining aspect ratio
+                    const container = this.canvas.parentElement;
+                    const maxWidth = container.clientWidth - 40;
+                    
+                    // Simple scaling logic
+                    let dw = img.width;
+                    let dh = img.height;
+                    
+                    if (dw > maxWidth) {
+                        dh = (maxWidth / dw) * dh;
+                        dw = maxWidth;
+                    }
+                    
+                    this.canvas.style.width = dw + "px";
+                    this.canvas.style.height = dh + "px";
+                    this.canvas.width = img.width;
+                    this.canvas.height = img.height;
+                    
+                    setTimeout(() => this.drawImage(), 50);
+                };
+                img.src = "data:image/jpeg;base64," + base64;
+            }
+            
+            loadTestImage() {
+                this.updateStatus("Using Test Image");
+                // Create a blue placeholder image
+                const c = document.createElement('canvas');
+                c.width = 1280; c.height = 720;
+                const cx = c.getContext('2d');
+                cx.fillStyle = "#4682B4"; cx.fillRect(0,0,1280,720);
+                cx.fillStyle = "white"; cx.font="40px Arial"; cx.fillText("TEST MODE", 500, 360);
+                this.loadImage(c.toDataURL().split(',')[1]);
+            }
+            
+            // Name Editing Helpers
+            editName(id) { document.getElementById('edit-form-'+id).style.display = 'block'; }
+            cancelEdit(id) { document.getElementById('edit-form-'+id).style.display = 'none'; }
+            saveName(id) {
+                const val = document.querySelector(`#edit-form-${id} .name-input`).value;
+                const space = this.spaces.find(s => s.id === id);
+                if(space) { 
+                    space.name = val; 
+                    this.updateSpacesList(); 
+                    this.updateJSONOutput();
+                    this.drawImage();
+                }
+            }
+            
+            resetSpaces() {
+                this.spaces = [];
+                this.updateSpacesList();
+                this.updateJSONOutput();
+                this.drawImage();
+            }
+        }
+        
+        // Initialize App
+        const app = new ImagePointSelector();
+    </script>
+</body>
+</html>

@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Camera Configuration</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+        }
+
+        .back-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .upload-section {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            padding: 20px;
+            background: #f8f9fa;
+            border-bottom: 2px solid #e9ecef;
+        }
+
+        .upload-section input[type="text"],
+        .upload-section input[type="number"],
+        .upload-section input[type="password"] {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            background: white;
+            min-width: 150px;
+            flex: 1;
+        }
+
+        .upload-section button {
+            padding: 10px 25px;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: transform 0.2s;
+            white-space: nowrap;
+        }
+
+        .upload-section button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .main-content {
+            display: flex;
+            padding: 20px;
+            gap: 30px;
+            min-height: 600px;
+        }
+
+        .image-container {
+            flex: 3;
+            position: relative;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            background: #f8f9fa;
+        }
+
+        .instructions {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #6c757d;
+            font-style: italic;
+        }
+
+        #imageCanvas {
+            width: 100%;
+            height: 500px;
+            border: 2px solid #ced4da;
+            border-radius: 8px;
+            background: white;
+            cursor: crosshair;
+            display: block;
+        }
+
+        .coordinates-display {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+            min-height: 80px;
+        }
+
+        .controls {
+            flex: 1;
+            min-width: 300px;
+        }
+
+        #spacesList {
+            max-height: 400px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 8px;
+            border: 1px solid #dee2e6;
+        }
+
+        .space-item {
+            padding: 12px;
+            margin: 8px 0;
+            background: #e7f3ff;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            position: relative;
+            transition: background 0.3s;
+        }
+
+        .space-item:hover {
+            background: #d4e8ff;
+        }
+
+        .space-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .space-item h4 {
+            color: #495057;
+            margin-bottom: 5px;
+        }
+
+        .space-item p {
+            font-size: 12px;
+            color: #6c757d;
+            margin: 3px 0;
+        }
+
+        .space-actions {
+            display: flex;
+            gap: 5px;
+        }
+
+        .delete-space-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .delete-space-btn:hover {
+            background: #ff3742;
+        }
+
+        .reorder-btn {
+            background: #57606f;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            margin-right: 5px;
+        }
+
+        .reorder-btn:hover {
+            background: #4b5562;
+        }
+
+        .output-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #dee2e6;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        #jsonOutput {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #f8f9fa;
+            resize: vertical;
+            margin: 15px 0;
+        }
+
+        .output-section button {
+            padding: 10px 20px;
+            margin-right: 10px;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        .output-section button:hover {
+            background: #218838;
+        }
+
+        #copyBtn {
+            background: #17a2b8;
+        }
+
+        #copyBtn:hover {
+            background: #138496;
+        }
+
+        .info-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-top: 2px solid #e9ecef;
+            margin-top: 20px;
+        }
+
+        .info-section h3 {
+            color: #495057;
+            margin-bottom: 15px;
+        }
+
+        .info-section ol {
+            padding-left: 25px;
+            color: #6c757d;
+        }
+
+        .info-section li {
+            margin-bottom: 8px;
+            line-height: 1.6;
+        }
+
+        .point-coord {
+            margin: 5px 0;
+            padding: 5px;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+
+        .db-section {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+
+        .db-section button {
+            padding: 8px 15px;
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .db-section button:hover {
+            background: linear-gradient(90deg, #ff6b47, #fea35c);
+        }
+
+        .db-section button.update-btn {
+            background: linear-gradient(90deg, #36d1dc, #5b86e5);
+        }
+
+        .db-section button.update-btn:hover {
+            background: linear-gradient(90deg, #2bc4cf, #4a75d9);
+        }
+
+        .edit-name-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: background-color 0.2s;
+        }
+
+        .edit-name-btn:hover {
+            background-color: rgba(0, 0, 0, 0.1);
+        }
+
+        .name-input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 5px;
+            font-size: 14px;
+            width: 70%;
+        }
+
+        .save-name-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+            font-size: 12px;
+        }
+
+        .save-name-btn:hover {
+            background-color: #218838;
+        }
+
+        .cancel-name-btn {
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .cancel-name-btn:hover {
+            background-color: #5a6268;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 50px;
+            color: #6c757d;
+            font-size: 18px;
+        }
+
+        .message {
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✏️ Edit Camera Configuration</h1>
+            <a href="/cameras" class="back-btn">← Back to Cameras</a>
+        </div>
+
+        <div id="message" class="message"></div>
+        
+        <div class="upload-section">
+            <input type="text" id="dvrName" placeholder="DVR Name (e.g., Yellow_Building)">
+            <input type="text" id="streamUrl" placeholder="SmartPSS URL (e.g., http://127.0.0.1:28731/?rtspport=28735)">
+            <input type="number" id="channelNumber" placeholder="Channel (e.g., 1)" min="1" max="8">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            
+            <button id="captureBtn">Capture Frame</button>
+            <button id="resetBtn">Reset Points</button>
+            <button id="saveBtn">Save Coordinates</button>
+        </div>
+        
+        <div class="main-content">
+            <div class="image-container">
+                <div class="instructions">
+                    <p>Camera information loaded. Click "Capture Frame" to update image.</p>
+                    <p>Then click and drag to add new parking spaces or edit existing ones.</p>
+                </div>
+                <canvas id="imageCanvas"></canvas>
+                <div class="coordinates-display" id="coordinatesDisplay">
+                    <h4>Status:</h4>
+                    <div class="point-coord">Loading camera configuration...</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <h3>Parking Spaces</h3>
+                <div id="spacesList">
+                    <div class="loading">Loading spaces...</div>
+                </div>
+                
+                <div class="output-section">
+                    <h3>Export Coordinates</h3>
+                    <textarea id="jsonOutput" readonly rows="10"></textarea>
+                    
+                    <div class="db-section">
+                        <button id="updateDbBtn" class="update-btn">Update in Database</button>
+                    </div>
+                    
+                    <div style="margin-top: 10px;">
+                        <button id="copyBtn">Copy JSON</button>
+                        <button id="exportBtn">Export as JSON</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="info-section">
+            <h3>Edit Instructions:</h3>
+            <ol>
+                <li>Camera information is automatically loaded from database</li>
+                <li>Click "Capture Frame" to get current image from camera</li>
+                <li>Existing parking spaces are displayed automatically</li>
+                <li>To delete a space: Click "Delete" button next to the space</li>
+                <li>To reorder spaces: Use the ↑ and ↓ buttons</li>
+                <li>To edit space name: Click ✏️ icon</li>
+                <li>To add new spaces: Click and drag on the image</li>
+                <li>Use "Update in Database" to save all changes</li>
+            </ol>
+        </div>
+    </div>
+    
+    <script>
+        // First, copy the entire ImagePointSelector class here
+        class ImagePointSelector {
+            constructor() {
+                this.canvas = document.getElementById('imageCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.spaces = [];
+                this.currentImage = null;
+                this.imageScale = 1;
+                this.canvasRect = null;
+                
+                this.isDrawing = false;
+                this.startX = 0;
+                this.startY = 0;
+                this.currentX = 0;
+                this.currentY = 0;
+                this.tempRect = null;
+                
+                this.initializeEventListeners();
+                
+                window.addEventListener('resize', () => {
+                    this.canvasRect = null;
+                });
+            }
+            
+            initializeEventListeners() {
+                document.getElementById('captureBtn').addEventListener('click', async () => {
+                    await this.captureFrameFromStream();
+                });
+                
+                this.canvas.addEventListener('mousedown', (e) => {
+                    this.startDrawing(e);
+                });
+                
+                this.canvas.addEventListener('mousemove', (e) => {
+                    this.drawing(e);
+                });
+                
+                this.canvas.addEventListener('mouseup', (e) => {
+                    this.stopDrawing(e);
+                });
+                
+                this.canvas.addEventListener('mouseleave', () => {
+                    if (this.isDrawing) {
+                        this.isDrawing = false;
+                        this.tempRect = null;
+                        this.drawImage();
+                    }
+                });
+                
+                document.getElementById('resetBtn').addEventListener('click', () => {
+                    this.resetSpaces();
+                });
+                
+                document.getElementById('saveBtn').addEventListener('click', () => {
+                    if (this.tempRect) {
+                        this.saveSpace();
+                    }
+                });
+                
+                document.getElementById('copyBtn').addEventListener('click', () => {
+                    this.copyJSON();
+                });
+                
+                document.getElementById('exportBtn').addEventListener('click', () => {
+                    this.exportJSON();
+                });
+                
+                // Database buttons - will be overridden in edit mode
+                const saveToDbBtn = document.getElementById('saveToDbBtn');
+                const loadFromDbBtn = document.getElementById('loadFromDbBtn');
+                
+                if (saveToDbBtn) {
+                    saveToDbBtn.addEventListener('click', () => {
+                        this.saveToDatabase();
+                    });
+                }
+                
+                if (loadFromDbBtn) {
+                    loadFromDbBtn.addEventListener('click', () => {
+                        this.loadFromDatabase();
+                    });
+                }
+                
+                document.getElementById('streamUrl').addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        this.captureFrameFromStream();
+                    }
+                });
+            }
+            
+            async saveToDatabase() {
+                if (this.spaces.length === 0) {
+                    alert('No spaces to save. Please create some spaces first.');
+                    return;
+                }
+                
+                const dvrName = document.getElementById('dvrName').value;
+                const streamUrl = document.getElementById('streamUrl').value;
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const channel = parseInt(document.getElementById('channelNumber').value);
+                
+                if (!dvrName) {
+                    alert('Please enter a DVR Name');
+                    return;
+                }
+                
+                if (!streamUrl) {
+                    alert('Please enter a SmartPSS URL');
+                    return;
+                }
+                
+                this.updateStatus('Saving to database...');
+                
+                try {
+                    const response = await fetch('/api/save-config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            dvr_name: dvrName,
+                            stream_url: streamUrl,
+                            username: username,
+                            password: password,
+                            channel: channel,
+                            spaces: this.spaces.map(space => ({
+                                spaceId: space.id,
+                                spaceName: space.name || `Space ${space.id}`,
+                                boundingBox: space.originalRect,
+                                corners: space.points,
+                                color: space.color
+                            }))
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.updateStatus(`Configuration saved to database! DVR: ${dvrName}, Spaces: ${result.spaces_saved}`);
+                        alert(`Configuration saved successfully!\nDVR Name: ${dvrName}\nSpaces saved: ${result.spaces_saved}`);
+                    } else {
+                        throw new Error(result.error || 'Failed to save to database');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error saving to database:', error);
+                    this.updateStatus(`Error: ${error.message}`);
+                    alert(`Failed to save to database: ${error.message}`);
+                }
+            }
+            
+            async loadFromDatabase() {
+                const dvrName = document.getElementById('dvrName').value;
+                const streamUrl = document.getElementById('streamUrl').value;
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const channel = parseInt(document.getElementById('channelNumber').value);
+                
+                if (!dvrName) {
+                    alert('Please enter a DVR Name');
+                    return;
+                }
+                
+                this.updateStatus('Loading from database...');
+                
+                try {
+                    const response = await fetch('/api/load-config', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            dvr_name: dvrName,
+                            stream_url: streamUrl,
+                            username: username,
+                            password: password,
+                            channel: channel
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Clear existing spaces
+                        this.spaces = [];
+                        
+                        // Convert loaded spaces to our format
+                        result.spaces.forEach(space => {
+                            const loadedSpace = {
+                                id: space.spaceId,
+                                name: space.spaceName,
+                                displayRect: {
+                                    x: space.boundingBox.x_min,
+                                    y: space.boundingBox.y_min,
+                                    width: space.boundingBox.width,
+                                    height: space.boundingBox.height
+                                },
+                                originalRect: {
+                                    x: space.boundingBox.x_min,
+                                    y: space.boundingBox.y_min,
+                                    width: space.boundingBox.width,
+                                    height: space.boundingBox.height,
+                                    x_min: space.boundingBox.x_min,
+                                    y_min: space.boundingBox.y_min,
+                                    x_max: space.boundingBox.x_max,
+                                    y_max: space.boundingBox.y_max
+                                },
+                                color: space.color || '#2ed573',
+                                points: space.corners
+                            };
+                            this.spaces.push(loadedSpace);
+                        });
+                        
+                        // Update UI
+                        this.updateSpacesList();
+                        this.updateJSONOutput();
+                        this.drawImage();
+                        
+                        this.updateStatus(`Loaded ${this.spaces.length} spaces from database`);
+                        alert(`Loaded ${this.spaces.length} spaces from database`);
+                    } else {
+                        throw new Error(result.error || 'Configuration not found');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error loading from database:', error);
+                    this.updateStatus(`Error: ${error.message}`);
+                    alert(`Failed to load from database: ${error.message}\n\nMake sure you have saved a configuration first.`);
+                }
+            }
+            
+            async captureFrameFromStream() {
+                const streamUrl = document.getElementById('streamUrl').value;
+                const channel = document.getElementById('channelNumber').value;
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                
+                if (!streamUrl) {
+                    alert('Please enter a SmartPSS URL');
+                    return;
+                }
+                
+                this.updateStatus('Connecting to RTSP stream...');
+                
+                try {
+                    const response = await fetch('/capture-frame', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            url: streamUrl,
+                            channel: parseInt(channel),
+                            username: username,
+                            password: password
+                        })
+                    });
+                    
+                    if (!response.ok) {
+                        throw new Error(`Server error: ${response.status}`);
+                    }
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        await this.loadImageFromBase64(result.image);
+                        this.updateStatus('Frame captured successfully! You can now select parking spaces.');
+                    } else {
+                        throw new Error(result.error || 'Failed to capture frame');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error capturing frame:', error);
+                    this.updateStatus(`Error: ${error.message}`);
+                    alert(`Failed to capture frame: ${error.message}\n\nTrying test mode...`);
+                    await this.loadTestImage();
+                }
+            }
+            
+            async loadTestImage() {
+                this.updateStatus('Using test image. Make sure SmartPSS is running for RTSP capture.');
+                
+                // Create a simple test image
+                const canvas = document.createElement('canvas');
+                canvas.width = 1280;
+                canvas.height = 720;
+                const ctx = canvas.getContext('2d');
+                
+                // Draw gradient background
+                const gradient = ctx.createLinearGradient(0, 0, 1280, 720);
+                gradient.addColorStop(0, '#4a6fa5');
+                gradient.addColorStop(1, '#166088');
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 1280, 720);
+                
+                // Draw text
+                ctx.fillStyle = 'white';
+                ctx.font = '30px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText('TEST IMAGE - Use for drawing practice', 640, 200);
+                ctx.font = '20px Arial';
+                ctx.fillText('Enter actual SmartPSS URL to capture real frames', 640, 250);
+                ctx.fillText('Draw rectangles to define parking spaces', 640, 300);
+                
+                // Draw some sample parking spaces
+                ctx.strokeStyle = '#ff4757';
+                ctx.lineWidth = 3;
+                ctx.setLineDash([5, 5]);
+                
+                // Sample space 1
+                ctx.strokeRect(200, 400, 200, 100);
+                ctx.fillStyle = '#ff4757';
+                ctx.font = 'bold 16px Arial';
+                ctx.fillText('Sample Space 1', 300, 450);
+                
+                // Sample space 2
+                ctx.strokeRect(500, 400, 200, 100);
+                ctx.fillText('Sample Space 2', 600, 450);
+                
+                // Sample space 3
+                ctx.strokeRect(800, 400, 200, 100);
+                ctx.fillText('Sample Space 3', 900, 450);
+                
+                ctx.setLineDash([]);
+                
+                // Convert to image
+                const dataURL = canvas.toDataURL('image/jpeg');
+                await this.loadImageFromBase64(dataURL.split(',')[1]);
+                this.updateStatus('Test image loaded. Draw rectangles to practice.');
+            }
+            
+            updateStatus(message) {
+                const display = document.getElementById('coordinatesDisplay');
+                display.innerHTML = `<h4>Status:</h4><div class="point-coord">${message}</div>`;
+            }
+            
+            async loadImageFromBase64(base64String) {
+                return new Promise((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.currentImage = img;
+                        this.fitCanvasToImage(img);
+                        this.drawImage();
+                        this.updateStatus('Image loaded. Click and drag to select parking spaces.');
+                        resolve();
+                    };
+                    img.onerror = reject;
+                    img.src = `data:image/jpeg;base64,${base64String}`;
+                });
+            }
+            
+            getCanvasRect() {
+                if (!this.canvasRect) {
+                    this.canvasRect = this.canvas.getBoundingClientRect();
+                }
+                return this.canvasRect;
+            }
+            
+            getCanvasCoordinates(event) {
+                const rect = this.getCanvasRect();
+                
+                const mouseX = event.clientX - rect.left;
+                const mouseY = event.clientY - rect.top;
+                
+                const cssToCanvasX = this.canvas.width / rect.width;
+                const cssToCanvasY = this.canvas.height / rect.height;
+                
+                const canvasX = mouseX * cssToCanvasX;
+                const canvasY = mouseY * cssToCanvasY;
+                
+                const originalX = Math.round(canvasX / this.imageScale);
+                const originalY = Math.round(canvasY / this.imageScale);
+                
+                return {
+                    displayX: mouseX,
+                    displayY: mouseY,
+                    canvasX: canvasX,
+                    canvasY: canvasY,
+                    originalX: originalX,
+                    originalY: originalY
+                };
+            }
+
+            normalizeRectangle(rect) {
+                const x = Math.min(rect.x, rect.x + rect.width);
+                const y = Math.min(rect.y, rect.y + rect.height);
+                const width = Math.abs(rect.width);
+                const height = Math.abs(rect.height);
+                
+                return { x, y, width, height };
+            }
+            
+            fitCanvasToImage(img) {
+                const container = this.canvas.parentElement;
+                const maxWidth = container.clientWidth - 40;
+                const maxHeight = 500;
+                
+                let displayWidth = img.width;
+                let displayHeight = img.height;
+                
+                if (displayWidth > maxWidth) {
+                    displayHeight = (maxWidth / displayWidth) * displayHeight;
+                    displayWidth = maxWidth;
+                }
+                
+                if (displayHeight > maxHeight) {
+                    displayWidth = (maxHeight / displayHeight) * displayWidth;
+                    displayHeight = maxHeight;
+                }
+                
+                this.canvas.style.width = Math.floor(displayWidth) + 'px';
+                this.canvas.style.height = Math.floor(displayHeight) + 'px';
+                
+                this.canvas.width = img.width;
+                this.canvas.height = img.height;
+                
+                this.imageScale = 1;
+                this.canvasRect = null;
+                
+                setTimeout(() => {
+                    this.drawImage();
+                }, 10);
+            }
+            
+            drawImage() {
+                if (!this.currentImage) return;
+                
+                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+                
+                this.ctx.drawImage(
+                    this.currentImage,
+                    0, 0, this.currentImage.width, this.currentImage.height,
+                    0, 0, this.canvas.width, this.canvas.height
+                );
+                
+                this.drawSpaces();
+                
+                if (this.tempRect) {
+                    this.drawRectangle(this.tempRect, '#ff4757', 2, true);
+                }
+            }
+            
+            drawRectangle(rect, color, lineWidth, showInfo = false) {
+                const normalized = this.normalizeRectangle(rect);
+                const { x, y, width, height } = normalized;
+                
+                this.ctx.strokeStyle = color;
+                this.ctx.fillStyle = color + '20';
+                this.ctx.lineWidth = lineWidth;
+                this.ctx.setLineDash([5, 5]);
+                
+                this.ctx.beginPath();
+                this.ctx.rect(x, y, width, height);
+                this.ctx.fill();
+                this.ctx.stroke();
+                this.ctx.setLineDash([]);
+                
+                this.ctx.fillStyle = color;
+                this.ctx.strokeStyle = '#fff';
+                this.ctx.lineWidth = 2;
+                
+                const corners = [
+                    { x, y },
+                    { x: x + width, y },
+                    { x: x + width, y: y + height },
+                    { x, y: y + height }
+                ];
+                
+                corners.forEach(corner => {
+                    this.ctx.beginPath();
+                    this.ctx.arc(corner.x, corner.y, 6, 0, Math.PI * 2);
+                    this.ctx.fill();
+                    this.ctx.stroke();
+                });
+                
+                if (showInfo) {
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = 'bold 12px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    
+                    const rectX = Math.round(x);
+                    const rectY = Math.round(y);
+                    const rectWidth = Math.round(width);
+                    const rectHeight = Math.round(height);
+                    
+                    this.ctx.fillText(
+                        `W: ${rectWidth}, H: ${rectHeight}`,
+                        x + width / 2,
+                        y + height / 2
+                    );
+                }
+            }
+            
+            startDrawing(e) {
+                if (!this.currentImage) {
+                    alert('Please capture a frame first');
+                    return;
+                }
+                
+                const coords = this.getCanvasCoordinates(e);
+                this.startX = coords.canvasX;
+                this.startY = coords.canvasY;
+                
+                this.isDrawing = true;
+                this.canvas.style.cursor = 'crosshair';
+            }
+            
+            drawing(e) {
+                if (!this.isDrawing) return;
+                
+                const coords = this.getCanvasCoordinates(e);
+                this.currentX = coords.canvasX;
+                this.currentY = coords.canvasY;
+                
+                const x = Math.min(this.startX, this.currentX);
+                const y = Math.min(this.startY, this.currentY);
+                const width = Math.abs(this.currentX - this.startX);
+                const height = Math.abs(this.currentY - this.startY);
+                
+                this.tempRect = { x, y, width, height };
+                this.drawImage();
+                
+                this.updateCoordinatesDisplay();
+            }
+            
+            stopDrawing(e) {
+                if (!this.isDrawing) return;
+                
+                this.isDrawing = false;
+                this.canvas.style.cursor = 'default';
+                
+                const coords = this.getCanvasCoordinates(e);
+                this.currentX = coords.canvasX;
+                this.currentY = coords.canvasY;
+                
+                const x = Math.min(this.startX, this.currentX);
+                const y = Math.min(this.startY, this.currentY);
+                const width = Math.abs(this.currentX - this.startX);
+                const height = Math.abs(this.currentY - this.startY);
+                
+                if (width > 10 && height > 10) {
+                    this.tempRect = { x, y, width, height };
+                    this.saveSpace();
+                } else {
+                    this.tempRect = null;
+                }
+                
+                this.drawImage();
+            }
+            
+            saveSpace() {
+                if (!this.tempRect) {
+                    alert('Please select an area first');
+                    return;
+                }
+                
+                const x = Math.round(this.tempRect.x);
+                const y = Math.round(this.tempRect.y);
+                const width = Math.round(this.tempRect.width);
+                const height = Math.round(this.tempRect.height);
+                
+                const colors = ['#2ed573', '#1e90ff', '#ff6b81', '#ffa502', '#7bed9f'];
+                const space = {
+                    id: this.spaces.length + 1,
+                    name: `Space ${this.spaces.length + 1}`,
+                    displayRect: { ...this.tempRect },
+                    originalRect: {
+                        x: x,
+                        y: y,
+                        width: width,
+                        height: height,
+                        x_min: x,
+                        y_min: y,
+                        x_max: x + width,
+                        y_max: y + height
+                    },
+                    color: colors[this.spaces.length % colors.length],
+                    points: [
+                        { x: x, y: y },
+                        { x: x + width, y: y },
+                        { x: x + width, y: y + height },
+                        { x: x, y: y + height }
+                    ]
+                };
+                
+                this.spaces.push(space);
+                this.tempRect = null;
+                
+                this.updateSpacesList();
+                this.updateJSONOutput();
+                this.drawImage();
+            }
+            
+            drawSpaces() {
+                this.spaces.forEach((space, index) => {
+                    this.drawRectangle(space.displayRect, space.color, 3);
+                    
+                    this.ctx.fillStyle = 'white';
+                    this.ctx.font = 'bold 14px Arial';
+                    this.ctx.textAlign = 'center';
+                    this.ctx.textBaseline = 'middle';
+                    
+                    const centerX = space.displayRect.x + space.displayRect.width / 2;
+                    const centerY = space.displayRect.y + space.displayRect.height / 2;
+                    
+                    // Use custom name if available, otherwise use default
+                    const displayName = space.name || `Space ${index + 1}`;
+                    this.ctx.fillText(displayName, centerX, centerY);
+                });
+            }
+            
+            updateCoordinatesDisplay() {
+                const display = document.getElementById('coordinatesDisplay');
+                
+                if (this.tempRect) {
+                    const x = Math.round(this.tempRect.x);
+                    const y = Math.round(this.tempRect.y);
+                    const width = Math.round(this.tempRect.width);
+                    const height = Math.round(this.tempRect.height);
+                    
+                    display.innerHTML = `
+                        <h4>Current Selection (Real-time):</h4>
+                        <div class="point-coord">
+                            Top-left: (${x}, ${y})
+                        </div>
+                        <div class="point-coord">
+                            Width: ${width}px, Height: ${height}px
+                        </div>
+                        <div class="point-coord">
+                            Area: ${width * height}px²
+                        </div>
+                        <div class="point-coord" style="font-size: 12px; color: #666;">
+                            Release mouse to auto-save. Click Save Coordinates to manually save.
+                        </div>
+                    `;
+                } else if (this.spaces.length > 0) {
+                    display.innerHTML = `
+                        <h4>Ready to select:</h4>
+                        <div class="point-coord">
+                            Click and drag to create new space
+                        </div>
+                        <div class="point-coord">
+                            ${this.spaces.length} space(s) saved
+                        </div>
+                        <div class="point-coord" style="font-size: 12px; color: #666;">
+                            Spaces auto-save when you release mouse
+                        </div>
+                    `;
+                } else if (this.currentImage) {
+                    display.innerHTML = `
+                        <h4>Instructions:</h4>
+                        <div class="point-coord">
+                            1. Click and hold to start selection
+                        </div>
+                        <div class="point-coord">
+                            2. Drag to define rectangle
+                        </div>
+                        <div class="point-coord">
+                            3. Release mouse, then click Save Coordinates
+                        </div>
+                    `;
+                } else {
+                    display.innerHTML = `
+                        <h4>Waiting for image:</h4>
+                        <div class="point-coord">
+                            Enter RTSP stream details above and click "Capture Frame"
+                        </div>
+                    `;
+                }
+            }
+            
+            updateSpacesList() {
+                const list = document.getElementById('spacesList');
+                list.innerHTML = '';
+                
+                this.spaces.forEach((space, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'space-item';
+                    div.setAttribute('data-id', space.id);
+                    div.innerHTML = `
+                        <div class="space-header">
+                            <h4 class="space-name">${space.name || `Space ${space.id}`}</h4>
+                            <button class="edit-name-btn" data-id="${space.id}">✏️</button>
+                        </div>
+                        <p>Position: (${space.originalRect.x}, ${space.originalRect.y})</p>
+                        <p>Size: ${space.originalRect.width} × ${space.originalRect.height}</p>
+                        <p>Area: ${space.originalRect.width * space.originalRect.height}px²</p>
+                        <div class="edit-form" id="edit-form-${space.id}" style="display: none; margin-top: 10px;">
+                            <input type="text" class="name-input" value="${space.name || `Space ${space.id}`}" 
+                                   placeholder="Enter space name">
+                            <button class="save-name-btn" data-id="${space.id}">Save</button>
+                            <button class="cancel-name-btn" data-id="${space.id}">Cancel</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+                
+                // Add event listeners for edit buttons
+                this.addEditEventListeners();
+            }
+            
+            addEditEventListeners() {
+                // Edit button click
+                document.querySelectorAll('.edit-name-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const spaceId = parseInt(e.target.getAttribute('data-id'));
+                        this.showEditForm(spaceId);
+                    });
+                });
+                
+                // Save name button
+                document.querySelectorAll('.save-name-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const spaceId = parseInt(e.target.getAttribute('data-id'));
+                        this.saveSpaceName(spaceId);
+                    });
+                });
+                
+                // Cancel button
+                document.querySelectorAll('.cancel-name-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const spaceId = parseInt(e.target.getAttribute('data-id'));
+                        this.hideEditForm(spaceId);
+                    });
+                });
+                
+                // Enter key on input
+                document.querySelectorAll('.name-input').forEach(input => {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            const spaceId = parseInt(e.target.closest('.edit-form').querySelector('.save-name-btn').getAttribute('data-id'));
+                            this.saveSpaceName(spaceId);
+                        }
+                    });
+                });
+            }
+            
+            showEditForm(spaceId) {
+                // Hide all edit forms first
+                document.querySelectorAll('.edit-form').forEach(form => {
+                    form.style.display = 'none';
+                });
+                
+                // Show the selected edit form
+                const editForm = document.getElementById(`edit-form-${spaceId}`);
+                if (editForm) {
+                    editForm.style.display = 'block';
+                    const input = editForm.querySelector('.name-input');
+                    input.focus();
+                    input.select();
+                }
+            }
+            
+            hideEditForm(spaceId) {
+                const editForm = document.getElementById(`edit-form-${spaceId}`);
+                if (editForm) {
+                    editForm.style.display = 'none';
+                }
+            }
+            
+            saveSpaceName(spaceId) {
+                const editForm = document.getElementById(`edit-form-${spaceId}`);
+                if (!editForm) return;
+                
+                const input = editForm.querySelector('.name-input');
+                const newName = input.value.trim();
+                
+                if (!newName) {
+                    alert('Space name cannot be empty');
+                    return;
+                }
+                
+                // Find the space and update its name
+                const space = this.spaces.find(s => s.id === spaceId);
+                if (space) {
+                    space.name = newName;
+                    
+                    // Update the display name
+                    const spaceHeader = editForm.closest('.space-item').querySelector('.space-name');
+                    spaceHeader.textContent = newName;
+                    
+                    // Hide the edit form
+                    this.hideEditForm(spaceId);
+                    
+                    // Update JSON output
+                    this.updateJSONOutput();
+                    
+                    // Redraw canvas to update names on rectangles
+                    this.drawImage();
+                    
+                    console.log(`Space ${spaceId} renamed to: ${newName}`);
+                }
+            }
+            
+            updateJSONOutput() {
+                const output = {
+                    streamUrl: document.getElementById('streamUrl').value || '',
+                    username: document.getElementById('username').value || '',
+                    channel: parseInt(document.getElementById('channelNumber').value) || 1,
+                    captureTime: new Date().toISOString(),
+                    imageDimensions: this.currentImage ? {
+                        width: this.currentImage.width,
+                        height: this.currentImage.height
+                    } : null,
+                    spaces: this.spaces.map(space => ({
+                        spaceId: space.id,
+                        spaceName: space.name || `Space ${space.id}`,
+                        boundingBox: {
+                            x_min: space.originalRect.x_min,
+                            y_min: space.originalRect.y_min,
+                            x_max: space.originalRect.x_max,
+                            y_max: space.originalRect.y_max,
+                            width: space.originalRect.width,
+                            height: space.originalRect.height
+                        },
+                        corners: space.points,
+                        color: space.color
+                    }))
+                };
+                
+                document.getElementById('jsonOutput').value = 
+                    JSON.stringify(output, null, 2);
+            }
+            
+            resetSpaces() {
+                this.spaces = [];
+                this.tempRect = null;
+                this.drawImage();
+                this.updateCoordinatesDisplay();
+                this.updateSpacesList();
+                document.getElementById('jsonOutput').value = '';
+            }
+            
+            copyJSON() {
+                const textarea = document.getElementById('jsonOutput');
+                textarea.select();
+                document.execCommand('copy');
+                alert('Coordinates copied to clipboard!');
+            }
+            
+            exportJSON() {
+                const data = document.getElementById('jsonOutput').value;
+                if (!data) {
+                    alert('No data to export');
+                    return;
+                }
+                
+                const blob = new Blob([data], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                
+                const streamUrl = document.getElementById('streamUrl').value || 'vehicle_spaces';
+                const channel = document.getElementById('channelNumber').value || '1';
+                const timestamp = new Date().toISOString().slice(0, 10);
+                a.download = `${streamUrl.replace(/[^a-z0-9]/gi, '_')}_channel_${channel}_${timestamp}.json`;
+                
+                a.href = url;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+        }
+
+        // Now create the extended class for edit mode
+        class EditImagePointSelector extends ImagePointSelector {
+            constructor(cameraChannelId) {
+                super(); // Call parent constructor
+                
+                // Add new properties specific to edit mode
+                this.cameraChannelId = cameraChannelId;
+                
+                // Load camera configuration automatically
+                this.loadCameraConfiguration();
+            }
+            
+            // Override initializeEventListeners to add edit-specific listeners
+            initializeEventListeners() {
+                // Call parent's initializeEventListeners first
+                super.initializeEventListeners();
+                
+                // Add edit-specific event listeners
+                document.getElementById('updateDbBtn').addEventListener('click', () => {
+                    this.updateInDatabase();
+                });
+            }
+            
+            async loadCameraConfiguration() {
+                try {
+                    this.updateStatus('Loading camera configuration...');
+                    
+                    const response = await fetch(`/api/get-camera-channel-with-spaces/${this.cameraChannelId}`);
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        // Populate form fields
+                        document.getElementById('dvrName').value = result.dvr_name;
+                        document.getElementById('streamUrl').value = result.stream_url;
+                        document.getElementById('channelNumber').value = result.channel_number;
+                        document.getElementById('username').value = result.username;
+                        document.getElementById('password').value = result.password;
+                        
+                        // Clear existing spaces
+                        this.spaces = [];
+                        
+                        // Load spaces from database
+                        result.spaces.forEach(space => {
+                            const loadedSpace = {
+                                id: space.id,
+                                name: space.space_name,
+                                displayRect: {
+                                    x: space.x_min,
+                                    y: space.y_min,
+                                    width: space.x_max - space.x_min,
+                                    height: space.y_max - space.y_min
+                                },
+                                originalRect: {
+                                    x: space.x_min,
+                                    y: space.y_min,
+                                    width: space.x_max - space.x_min,
+                                    height: space.y_max - space.y_min,
+                                    x_min: space.x_min,
+                                    y_min: space.y_min,
+                                    x_max: space.x_max,
+                                    y_max: space.y_max
+                                },
+                                color: space.color_hex || '#2ed573',
+                                points: JSON.parse(space.corners)
+                            };
+                            this.spaces.push(loadedSpace);
+                        });
+                        
+                        // Update UI
+                        this.updateSpacesList();
+                        this.updateJSONOutput();
+                        
+                        this.updateStatus('Configuration loaded. Click "Capture Frame" to update image.');
+                        
+                        // Automatically capture frame
+                        setTimeout(() => {
+                            this.captureFrameFromStream();
+                        }, 500);
+                        
+                    } else {
+                        throw new Error(result.error || 'Failed to load configuration');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error loading camera configuration:', error);
+                    this.updateStatus(`Error: ${error.message}`);
+                    this.showMessage(`Failed to load camera: ${error.message}`, 'error');
+                }
+            }
+            
+            async updateInDatabase() {
+                if (this.spaces.length === 0) {
+                    alert('No spaces to save. Please create some spaces first.');
+                    return;
+                }
+                
+                const dvrName = document.getElementById('dvrName').value;
+                const streamUrl = document.getElementById('streamUrl').value;
+                const username = document.getElementById('username').value;
+                const password = document.getElementById('password').value;
+                const channel = parseInt(document.getElementById('channelNumber').value);
+                
+                if (!dvrName || !streamUrl || !username || !password) {
+                    alert('Please fill in all required fields');
+                    return;
+                }
+                
+                this.updateStatus('Updating in database...');
+                
+                try {
+                    const response = await fetch('/api/update-camera-with-spaces', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            camera_channel_id: this.cameraChannelId,
+                            dvr_name: dvrName,
+                            stream_url: streamUrl,
+                            username: username,
+                            password: password,
+                            channel: channel,
+                            spaces: this.spaces.map(space => ({
+                                spaceId: space.id,
+                                spaceName: space.name || `Space ${space.id}`,
+                                boundingBox: space.originalRect,
+                                corners: space.points,
+                                color: space.color
+                            }))
+                        })
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        this.updateStatus(`Configuration updated! Spaces: ${this.spaces.length}`);
+                        this.showMessage('Configuration updated successfully!', 'success');
+                    } else {
+                        throw new Error(result.error || 'Failed to update database');
+                    }
+                    
+                } catch (error) {
+                    console.error('Error updating database:', error);
+                    this.updateStatus(`Error: ${error.message}`);
+                    this.showMessage(`Failed to update: ${error.message}`, 'error');
+                }
+            }
+            
+            // Override updateSpacesList to add delete and reorder buttons
+            updateSpacesList() {
+                const list = document.getElementById('spacesList');
+                list.innerHTML = '';
+                
+                this.spaces.forEach((space, index) => {
+                    const div = document.createElement('div');
+                    div.className = 'space-item';
+                    div.setAttribute('data-id', space.id);
+                    div.innerHTML = `
+                        <div class="space-header">
+                            <h4 class="space-name">${space.name || `Space ${space.id}`}</h4>
+                            <div class="space-actions">
+                                <button class="reorder-btn move-up-btn" data-id="${space.id}" ${index === 0 ? 'disabled' : ''}>↑</button>
+                                <button class="reorder-btn move-down-btn" data-id="${space.id}" ${index === this.spaces.length - 1 ? 'disabled' : ''}>↓</button>
+                                <button class="edit-name-btn" data-id="${space.id}">✏️</button>
+                                <button class="delete-space-btn" data-id="${space.id}">Delete</button>
+                            </div>
+                        </div>
+                        <p>Position: (${space.originalRect.x}, ${space.originalRect.y})</p>
+                        <p>Size: ${space.originalRect.width} × ${space.originalRect.height}</p>
+                        <p>Area: ${space.originalRect.width * space.originalRect.height}px²</p>
+                        <div class="edit-form" id="edit-form-${space.id}" style="display: none; margin-top: 10px;">
+                            <input type="text" class="name-input" value="${space.name || `Space ${space.id}`}" 
+                                   placeholder="Enter space name">
+                            <button class="save-name-btn" data-id="${space.id}">Save</button>
+                            <button class="cancel-name-btn" data-id="${space.id}">Cancel</button>
+                        </div>
+                    `;
+                    list.appendChild(div);
+                });
+                
+                // Add event listeners for edit buttons
+                this.addEditEventListeners();
+                
+                // Add event listeners for delete and reorder buttons
+                this.addDeleteReorderEventListeners();
+            }
+            
+            addDeleteReorderEventListeners() {
+                // Delete button click
+                document.querySelectorAll('.delete-space-btn').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const spaceId = parseInt(e.target.getAttribute('data-id'));
+                        this.deleteSpace(spaceId);
+                    });
+                });
+                
+                // Move up button
+                document.querySelectorAll('.move-up-btn:not([disabled])').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const spaceId = parseInt(e.target.getAttribute('data-id'));
+                        this.moveSpace(spaceId, -1);
+                    });
+                });
+                
+                // Move down button
+                document.querySelectorAll('.move-down-btn:not([disabled])').forEach(button => {
+                    button.addEventListener('click', (e) => {
+                        const spaceId = parseInt(e.target.getAttribute('data-id'));
+                        this.moveSpace(spaceId, 1);
+                    });
+                });
+            }
+            
+            deleteSpace(spaceId) {
+                if (confirm('Are you sure you want to delete this parking space?')) {
+                    this.spaces = this.spaces.filter(space => space.id !== spaceId);
+                    this.updateSpacesList();
+                    this.updateJSONOutput();
+                    this.drawImage();
+                    this.updateStatus(`Space deleted. Total spaces: ${this.spaces.length}`);
+                }
+            }
+            
+            moveSpace(spaceId, direction) {
+                const index = this.spaces.findIndex(space => space.id === spaceId);
+                if (index === -1) return;
+                
+                const newIndex = index + direction;
+                if (newIndex < 0 || newIndex >= this.spaces.length) return;
+                
+                // Swap the spaces
+                [this.spaces[index], this.spaces[newIndex]] = [this.spaces[newIndex], this.spaces[index]];
+                
+                this.updateSpacesList();
+                this.updateJSONOutput();
+                this.drawImage();
+                this.updateStatus(`Space moved ${direction > 0 ? 'down' : 'up'}.`);
+            }
+            
+            showMessage(text, type) {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = text;
+                messageDiv.className = `message ${type}`;
+                messageDiv.style.display = 'block';
+                
+                if (type === 'success') {
+                    setTimeout(() => {
+                        messageDiv.style.display = 'none';
+                    }, 3000);
+                }
+            }
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            // Get camera channel ID from URL
+            const pathParts = window.location.pathname.split('/');
+            const cameraChannelId = pathParts[pathParts.length - 1];
+            
+            if (cameraChannelId && !isNaN(cameraChannelId)) {
+                new EditImagePointSelector(parseInt(cameraChannelId));
+            } else {
+                const messageDiv = document.getElementById('message');
+                messageDiv.textContent = 'Invalid camera channel ID';
+                messageDiv.className = 'message error';
+                messageDiv.style.display = 'block';
+                
+                document.getElementById('coordinatesDisplay').innerHTML = 
+                    '<h4>Error:</h4><div class="point-coord">Invalid camera channel ID</div>';
+            }
+        });
+    </script>
+</body>
+</html>

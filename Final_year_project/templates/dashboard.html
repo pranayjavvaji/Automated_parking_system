@@ -1,0 +1,974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartPSS Camera Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .header h1 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 2em;
+        }
+
+        .status-bar {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .channel-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);  /* 3 columns for 9 buttons */
+            gap: 10px;
+        }
+
+        .channel-btn {
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 13px;
+        }
+
+        .channel-btn small {
+            font-size: 10px;
+            display: block;
+            color: #999;
+        }
+
+        .channel-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .channel-btn.active small {
+            color: #e0e0e0;
+        }
+
+        /* Responsive adjustment for mobile */
+        @media (max-width: 768px) {
+            .channel-buttons {
+                grid-template-columns: repeat(2, 1fr);  /* 2 columns on mobile */
+            }
+        }
+
+        .status-item {
+            background: #f0f0f0;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        .status-item.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .video-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .video-wrapper {
+            position: relative;
+            width: 100%;
+            padding-top: 56.25%; /* 16:9 Aspect Ratio */
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .video-wrapper img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .video-overlay {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            z-index: 10;
+        }
+
+        .video-placeholder {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .connection-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .connection-form {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .form-group input, .form-group select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .controls-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .controls-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .control-group {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+        }
+
+        .control-group h3 {
+            color: #555;
+            margin-bottom: 15px;
+            font-size: 16px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5a67d8;
+        }
+
+        .btn-success {
+            background: #48bb78;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #38a169;
+        }
+
+        .btn-danger {
+            background: #f56565;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #e53e3e;
+        }
+
+        .btn-warning {
+            background: #ecc94b;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #d69e2e;
+        }
+
+        .btn-secondary {
+            background: #a0aec0;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #718096;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .channel-btn {
+            padding: 10px;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .channel-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .detection-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        .detection-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .detection-results {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            min-height: 100px;
+        }
+
+        .result-item {
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+        }
+
+        .timestamp {
+            color: #666;
+            font-size: 12px;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            display: none;
+        }
+
+        .alert-success {
+            background: #c6f6d5;
+            color: #22543d;
+            display: block;
+        }
+
+        .alert-error {
+            background: #fed7d7;
+            color: #742a2a;
+            display: block;
+        }
+
+        .loader {
+            border: 3px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 3px solid #667eea;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: white;
+        }
+
+        .connection-info {
+            background: #e8f4fd;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            font-size: 13px;
+        }
+
+        .saved-configs {
+            margin-top: 15px;
+        }
+
+        .config-chip {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 5px 10px;
+            border-radius: 15px;
+            margin: 5px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .config-chip:hover {
+            background: #cbd5e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Header -->
+        <div class="header">
+            <h1>🎥 SmartPSS Camera Dashboard</h1>
+            <div class="status-bar">
+                <div class="status-item" id="ffmpeg-status">
+                    FFmpeg: Checking...
+                </div>
+                <div class="status-item" id="connection-status">
+                    Connection: Disconnected
+                </div>
+                <div class="status-item" id="channel-info">
+                    Channel: -
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Feed -->
+        <div class="video-container">
+            <div class="video-wrapper">
+                <img src="{{ url_for('video_feed') }}" alt="Camera Feed" id="video-feed" style="display: none;">
+                <div class="video-placeholder" id="video-placeholder">
+                    <div style="font-size: 48px; margin-bottom: 10px;">📷</div>
+                    <div>No camera connected</div>
+                    <div style="font-size: 12px; margin-top: 10px;">Enter camera details below to connect</div>
+                </div>
+                <div class="video-overlay" id="video-overlay" style="display: none;">
+                    Not connected
+                </div>
+            </div>
+        </div>
+
+        <!-- Connection Panel -->
+        <div class="connection-panel">
+            <h2 style="margin-bottom: 15px;">🔌 Camera Connection</h2>
+            <div class="connection-form" id="connection-form">
+                <div class="form-group">
+                    <label for="camera-url">RTSP/HTTP URL *</label>
+                    <input type="text" id="camera-url" placeholder="http://127.0.0.1:20262/?rtspport=20266&tcpport=20258">
+                </div>
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" value="admin" placeholder="admin">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" value="admin@123" placeholder="••••••••">
+                </div>
+                <div class="form-group">
+                    <label for="channel">Channel</label>
+                    <select id="channel">
+                        <option value="1">Channel 1</option>
+                        <option value="2">Channel 2</option>
+                        <option value="3">Channel 3</option>
+                        <option value="4">Channel 4</option>
+                        <option value="5">Channel 5</option>
+                        <option value="6">Channel 6</option>
+                        <option value="7">Channel 7</option>
+                        <option value="8">Channel 8</option>
+                        <option value="9">Channel 9</option>
+                    </select>
+                </div>
+                <div class="form-group" style="display: flex; flex-direction: row; gap: 10px;">
+                    <button class="btn btn-primary" onclick="connectCamera()" id="connect-btn">Connect</button>
+                    <button class="btn btn-secondary" onclick="testConnection()" id="test-btn">Test</button>
+                    <button class="btn btn-danger" onclick="disconnectCamera()" id="disconnect-btn" style="display: none;">Disconnect</button>
+                </div>
+            </div>
+            
+            <!-- Connection info -->
+            <div class="connection-info" id="connection-info" style="display: none;">
+                <strong>Connected to:</strong> <span id="connected-url"></span><br>
+                <strong>Username:</strong> <span id="connected-username"></span><br>
+                <strong>Channel:</strong> <span id="connected-channel"></span>
+            </div>
+
+            <!-- Saved configurations (localStorage) -->
+            <div class="saved-configs" id="saved-configs">
+                <h3 style="font-size: 14px; margin-bottom: 10px;">📋 Saved Configurations:</h3>
+                <div id="config-list"></div>
+            </div>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-panel">
+            <div class="controls-grid">
+                <!-- Channel Selection -->
+                <!-- Channel Selection -->
+                <div class="control-group">
+                    <h3>Channel Selection (1-9)</h3>
+                    <div class="channel-buttons" style="grid-template-columns: repeat(3, 1fr);">
+                        <button class="channel-btn" onclick="switchChannel(1)" disabled id="ch1-btn">Ch 1<br><small>outside+road</small></button>
+                        <button class="channel-btn" onclick="switchChannel(2)" disabled id="ch2-btn">Ch 2<br><small>outside</small></button>
+                        <button class="channel-btn" onclick="switchChannel(3)" disabled id="ch3-btn">Ch 3<br><small>Channel3</small></button>
+                        <button class="channel-btn" onclick="switchChannel(4)" disabled id="ch4-btn">Ch 4<br><small>top</small></button>
+                        <button class="channel-btn" onclick="switchChannel(5)" disabled id="ch5-btn">Ch 5<br><small>Channel5</small></button>
+                        <button class="channel-btn" onclick="switchChannel(6)" disabled id="ch6-btn">Ch 6<br><small>Channel6</small></button>
+                        <button class="channel-btn" onclick="switchChannel(7)" disabled id="ch7-btn">Ch 7<br><small>Channel7</small></button>
+                        <button class="channel-btn" onclick="switchChannel(8)" disabled id="ch8-btn">Ch 8<br><small>Channel8</small></button>
+                        <button class="channel-btn" onclick="switchChannel(9)" disabled id="ch9-btn">Ch 9<br><small>Channel9</small></button>
+                    </div>
+                </div>
+
+                <!-- Detection Control -->
+                <div class="control-group">
+                    <h3>Object Detection</h3>
+                    <button class="btn btn-warning" id="capture-btn" onclick="captureFrame()" disabled>📸 Capture Frame</button>
+                    <button class="btn btn-primary" onclick="refreshStatus()" style="margin-top: 10px;">🔄 Refresh Status</button>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="control-group">
+                    <h3>Quick Actions</h3>
+                    <button class="btn btn-secondary" onclick="saveCurrentConfig()">💾 Save Current Config</button>
+                    <button class="btn btn-secondary" onclick="clearSavedConfigs()" style="margin-top: 10px;">🗑 Clear Saved</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detection Results -->
+        <div class="detection-panel">
+            <div class="detection-header">
+                <h2>📊 Detection Results</h2>
+                <span class="timestamp" id="last-update">Last update: Never</span>
+            </div>
+            <div class="detection-results" id="detection-results">
+                <div style="text-align: center; color: #666; padding: 20px;">
+                    No detections yet. Connect to camera and click "Capture Frame".
+                </div>
+            </div>
+            <div class="loader" id="loader"></div>
+        </div>
+
+        <!-- Alert Messages -->
+        <div id="alert" class="alert"></div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>SmartPSS Web Dashboard v2.0 - Dynamic Camera Connection</p>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let streamActive = false;
+        let currentChannel = 1;
+        let statusInterval;
+        let connected = false;
+
+        // Load saved configurations on page load
+        window.onload = function() {
+            loadSavedConfigs();
+            checkStatus();
+            statusInterval = setInterval(checkStatus, 5000);
+        };
+
+        // Save configuration to localStorage
+        function saveCurrentConfig() {
+            const config = {
+                url: document.getElementById('camera-url').value,
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                channel: document.getElementById('channel').value
+            };
+
+            if (!config.url) {
+                showAlert('Please enter a URL to save', 'error');
+                return;
+            }
+
+            let savedConfigs = JSON.parse(localStorage.getItem('cameraConfigs') || '[]');
+            
+            // Check if config already exists
+            const exists = savedConfigs.some(c => 
+                c.url === config.url && 
+                c.username === config.username && 
+                c.channel === config.channel
+            );
+
+            if (!exists) {
+                savedConfigs.push(config);
+                localStorage.setItem('cameraConfigs', JSON.stringify(savedConfigs));
+                showAlert('Configuration saved!', 'success');
+                loadSavedConfigs();
+            } else {
+                showAlert('Configuration already exists', 'error');
+            }
+        }
+
+        // Load saved configurations
+        function loadSavedConfigs() {
+            const savedConfigs = JSON.parse(localStorage.getItem('cameraConfigs') || '[]');
+            const configList = document.getElementById('config-list');
+            
+            if (savedConfigs.length === 0) {
+                configList.innerHTML = '<div style="color: #666; font-size: 12px;">No saved configurations</div>';
+                return;
+            }
+
+            let html = '';
+            savedConfigs.forEach((config, index) => {
+                html += `<span class="config-chip" onclick="loadConfig(${index})">
+                    Ch${config.channel}: ${config.url.substring(0, 30)}...
+                </span>`;
+            });
+            configList.innerHTML = html;
+        }
+
+        // Load a saved configuration
+        function loadConfig(index) {
+            const savedConfigs = JSON.parse(localStorage.getItem('cameraConfigs') || '[]');
+            const config = savedConfigs[index];
+            
+            document.getElementById('camera-url').value = config.url;
+            document.getElementById('username').value = config.username;
+            document.getElementById('password').value = config.password;
+            document.getElementById('channel').value = config.channel;
+            
+            showAlert('Configuration loaded! Click Connect to start stream', 'success');
+        }
+
+        // Clear saved configurations
+        function clearSavedConfigs() {
+            if (confirm('Clear all saved configurations?')) {
+                localStorage.removeItem('cameraConfigs');
+                loadSavedConfigs();
+                showAlert('Saved configurations cleared', 'success');
+            }
+        }
+
+        // Connect to camera
+        function connectCamera() {
+            const url = document.getElementById('camera-url').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const channel = document.getElementById('channel').value;
+
+            if (!url) {
+                showAlert('Please enter camera URL', 'error');
+                return;
+            }
+
+            showLoader(true);
+
+            fetch('/connect_camera', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: url,
+                    username: username,
+                    password: password,
+                    channel: channel
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoader(false);
+                if (data.status === 'success') {
+                    showAlert(data.message, 'success');
+                    connected = true;
+                    updateConnectionUI(true, data.config);
+                    checkStatus();
+                    
+                    // Show video feed
+                    document.getElementById('video-feed').style.display = 'block';
+                    document.getElementById('video-placeholder').style.display = 'none';
+                    document.getElementById('video-feed').src = '{{ url_for('video_feed') }}?' + new Date().getTime();
+                } else {
+                    showAlert('Failed to connect: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showLoader(false);
+                showAlert('Error connecting to camera', 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        // Test connection
+        function testConnection() {
+            const url = document.getElementById('camera-url').value;
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+            const channel = document.getElementById('channel').value;
+
+            if (!url) {
+                showAlert('Please enter camera URL', 'error');
+                return;
+            }
+
+            showLoader(true);
+
+            fetch('/test_connection', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    url: url,
+                    username: username,
+                    password: password,
+                    channel: channel
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoader(false);
+                if (data.status === 'success') {
+                    showAlert('Connection test successful!', 'success');
+                } else {
+                    showAlert('Connection test failed: ' + data.message, 'error');
+                }
+            })
+            .catch(error => {
+                showLoader(false);
+                showAlert('Error testing connection', 'error');
+            });
+        }
+
+        // Disconnect camera
+        function disconnectCamera() {
+            showLoader(true);
+            
+            fetch('/disconnect_camera', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoader(false);
+                if (data.status === 'success') {
+                    showAlert('Disconnected from camera', 'success');
+                    connected = false;
+                    streamActive = false;
+                    updateConnectionUI(false);
+                    
+                    // Hide video feed, show placeholder
+                    document.getElementById('video-feed').style.display = 'none';
+                    document.getElementById('video-placeholder').style.display = 'flex';
+                    document.getElementById('video-overlay').style.display = 'none';
+                    
+                    checkStatus();
+                } else {
+                    showAlert('Failed to disconnect', 'error');
+                }
+            })
+            .catch(error => {
+                showLoader(false);
+                showAlert('Error disconnecting', 'error');
+            });
+        }
+
+        // Update connection UI
+        function updateConnectionUI(connected, config = null) {
+            const connectBtn = document.getElementById('connect-btn');
+            const disconnectBtn = document.getElementById('disconnect-btn');
+            const testBtn = document.getElementById('test-btn');
+            const connectionInfo = document.getElementById('connection-info');
+            const channelBtns = ['ch1-btn', 'ch2-btn', 'ch3-btn', 'ch4-btn', 'ch5-btn', 'ch6-btn', 'ch7-btn', 'ch8-btn', 'ch9-btn'];    
+            
+            if (connected) {
+                connectBtn.style.display = 'none';
+                disconnectBtn.style.display = 'inline-block';
+                testBtn.style.display = 'none';
+                connectionInfo.style.display = 'block';
+                
+                if (config) {
+                    document.getElementById('connected-url').textContent = config.url;
+                    document.getElementById('connected-username').textContent = document.getElementById('username').value;
+                    document.getElementById('connected-channel').textContent = config.channel;
+                }
+                
+                // Enable channel buttons
+                channelBtns.forEach(id => {
+                    document.getElementById(id).disabled = false;
+                });
+                
+                document.getElementById('capture-btn').disabled = false;
+                document.getElementById('video-overlay').style.display = 'block';
+            } else {
+                connectBtn.style.display = 'inline-block';
+                disconnectBtn.style.display = 'none';
+                testBtn.style.display = 'inline-block';
+                connectionInfo.style.display = 'none';
+                
+                // Disable channel buttons
+                channelBtns.forEach(id => {
+                    document.getElementById(id).disabled = true;
+                    document.getElementById(id).classList.remove('active');
+                });
+                
+                document.getElementById('capture-btn').disabled = true;
+                document.getElementById('video-overlay').style.display = 'none';
+            }
+        }
+
+        // Switch channel
+        function switchChannel(channel) {
+            if (!connected) {
+                showAlert('Please connect to camera first', 'error');
+                return;
+            }
+
+            showLoader(true);
+            
+            fetch('/switch_channel', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({channel: channel})
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoader(false);
+                if (data.status === 'success') {
+                    showAlert(data.message, 'success');
+                    currentChannel = channel;
+                    checkStatus();
+                    
+                    // Refresh video feed
+                    document.getElementById('video-feed').src = '{{ url_for('video_feed') }}?' + new Date().getTime();
+                } else {
+                    showAlert('Failed to switch channel', 'error');
+                }
+            })
+            .catch(error => {
+                showLoader(false);
+                showAlert('Error switching channel', 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        // Check status
+        function checkStatus() {
+            fetch('/get_status')
+                .then(response => response.json())
+                .then(data => {
+                    updateStatusUI(data);
+                })
+                .catch(error => {
+                    console.error('Error checking status:', error);
+                });
+        }
+
+        // Update UI based on status
+        function updateStatusUI(data) {
+            // Update FFmpeg status
+            const ffmpegEl = document.getElementById('ffmpeg-status');
+            ffmpegEl.textContent = data.ffmpeg_ok ? 'FFmpeg: ✓ Ready' : 'FFmpeg: ✗ Not found';
+            ffmpegEl.style.background = data.ffmpeg_ok ? '#4CAF50' : '#f56565';
+            ffmpegEl.style.color = 'white';
+
+            // Update connection status
+            const connEl = document.getElementById('connection-status');
+            streamActive = data.stream_active;
+            connected = data.connected;
+            connEl.textContent = connected ? 'Connection: ● Connected' : 'Connection: ○ Disconnected';
+            connEl.style.background = connected ? '#4CAF50' : '#f56565';
+            connEl.style.color = 'white';
+
+            // Update channel info
+            const channelEl = document.getElementById('channel-info');
+            if (connected && data.current_channel) {
+                channelEl.textContent = `Channel: ${data.current_channel} - ${data.channel_name}`;
+            } else {
+                channelEl.textContent = 'Channel: -';
+            }
+            currentChannel = data.current_channel || 1;
+
+            // Update overlay
+            if (connected) {
+                document.getElementById('video-overlay').style.display = 'block';
+                document.getElementById('video-overlay').textContent = 
+                    `Channel ${data.current_channel}: ${data.channel_name}`;
+            }
+
+            // Update channel buttons
+            document.querySelectorAll('.channel-btn').forEach((btn, index) => {
+                if (index + 1 === currentChannel) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+
+            // Update connection UI if needed
+            if (connected && document.getElementById('connect-btn').style.display !== 'none') {
+                updateConnectionUI(true, {url: data.camera_url, channel: data.channel});
+            } else if (!connected && document.getElementById('disconnect-btn').style.display !== 'none') {
+                updateConnectionUI(false);
+            }
+        }
+
+        // Capture frame
+        function captureFrame() {
+            if (!connected) {
+                showAlert('Please connect to camera first', 'error');
+                return;
+            }
+
+            showLoader(true);
+            
+            fetch('/capture_frame', {
+                method: 'POST'
+            })
+            .then(response => response.json())
+            .then(data => {
+                showLoader(false);
+                if (data.status === 'success') {
+                    showAlert('Frame captured!', 'success');
+                    updateDetectionResults(data.data);
+                } else {
+                    showAlert('Failed to capture frame', 'error');
+                }
+            })
+            .catch(error => {
+                showLoader(false);
+                showAlert('Error capturing frame', 'error');
+                console.error('Error:', error);
+            });
+        }
+
+        // Update detection results
+        function updateDetectionResults(data) {
+            const resultsDiv = document.getElementById('detection-results');
+            const timestamp = new Date().toLocaleTimeString();
+            
+            document.getElementById('last-update').textContent = `Last update: ${timestamp}`;
+            
+            let html = '';
+            
+            if (data) {
+                html += `<div class="result-item">`;
+                html += `<strong>📅 Time:</strong> ${new Date(data.timestamp * 1000).toLocaleString()}<br>`;
+                html += `<strong>📺 Channel:</strong> ${data.channel}<br>`;
+                html += `<strong>📐 Frame Size:</strong> ${data.frame_shape}<br>`;
+                html += `<strong>🔗 Camera:</strong> ${data.camera_url}<br>`;
+                
+                if (data.detections) {
+                    html += `<strong>🎯 Detections:</strong> ${data.detections}<br>`;
+                }
+                
+                html += `</div>`;
+            } else {
+                html = '<div style="text-align: center; color: #666; padding: 20px;">No detections yet</div>';
+            }
+            
+            resultsDiv.innerHTML = html;
+        }
+
+        // Refresh status
+        function refreshStatus() {
+            checkStatus();
+            showAlert('Status refreshed', 'success');
+        }
+
+        // Show/hide loader
+        function showLoader(show) {
+            document.getElementById('loader').style.display = show ? 'block' : 'none';
+        }
+
+        // Show alert
+        function showAlert(message, type) {
+            const alertDiv = document.getElementById('alert');
+            alertDiv.textContent = message;
+            alertDiv.className = `alert alert-${type}`;
+            
+            setTimeout(() => {
+                alertDiv.style.display = 'none';
+            }, 3000);
+        }
+
+        // Clean up
+        window.onbeforeunload = function() {
+            if (statusInterval) {
+                clearInterval(statusInterval);
+            }
+        };
+    </script>
+</body>
+</html> 

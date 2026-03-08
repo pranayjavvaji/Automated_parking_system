@@ -1,0 +1,15 @@
+# Ignore FFmpeg binaries and docs
+ffmpeg/
+
+# Ignore Python environments
+venv/
+.env
+__pycache__/
+
+# Ignore large YOLO model weights
+*.pt
+*.weights
+
+# Ignore OS files
+Thumbs.db
+.DS_Store
