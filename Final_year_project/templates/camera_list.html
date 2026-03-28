@@ -5,355 +5,79 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camera List - Parking System</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2980, #26d0ce);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            padding: 30px;
-            margin: 0 auto;
-            max-width: 1200px;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            font-size: 2.2rem;
-            background: linear-gradient(to right, #1a2980, #26d0ce);
-            -webkit-background-clip: text;
-            background-clip: text;
-            color: transparent;
-        }
-        
-        .back-btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        
-        .back-btn:hover {
-            transform: translateY(-2px);
-        }
-        
-        .cameras-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-        
-        .dvr-card {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-            transition: transform 0.3s;
-        }
-        
-        .dvr-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
-        }
-        
-        .dvr-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 15px;
-            padding-bottom: 10px;
-            border-bottom: 1px solid #e9ecef;
-        }
-        
-        .dvr-name {
-            font-size: 1.4rem;
-            color: #2c3e50;
-            font-weight: bold;
-        }
-        
-        .dvr-info {
-            margin-bottom: 15px;
-            color: #6c757d;
-        }
-        
-        .dvr-info p {
-            margin: 5px 0;
-            font-size: 0.9rem;
-        }
-        
-        .channels-section {
-            margin-top: 15px;
-        }
-        
-        .channel-item {
-            background: #f8f9fa;
-            border-radius: 6px;
-            padding: 15px;
-            margin-bottom: 10px;
-            border-left: 4px solid #667eea;
-        }
-        
-        .channel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-        }
-        
-        .channel-number {
-            font-weight: bold;
-            color: #495057;
-            background: #e7f3ff;
-            padding: 2px 10px;
-            border-radius: 4px;
-        }
-        
-        .edit-btn {
-            background: linear-gradient(135deg, #36d1dc, #5b86e5);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            text-decoration: none;
-            transition: background 0.3s;
-        }
-        
-        .edit-btn:hover {
-            background: linear-gradient(135deg, #2bc4cf, #4a75d9);
-        }
-        
-        .channel-stats {
-            display: flex;
-            justify-content: space-between;
-            font-size: 0.85rem;
-            color: #6c757d;
-        }
-        
-        .no-cameras {
-            text-align: center;
-            padding: 50px;
-            color: #6c757d;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border: 2px dashed #dee2e6;
-        }
-        
-        .no-cameras h3 {
-            margin-bottom: 10px;
-            color: #495057;
-        }
-        
-        .setup-btn {
-            display: inline-block;
-            margin-top: 20px;
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        .delete-btn {
-            background: linear-gradient(135deg, #ff6b6b, #ee5253);
-            color: white;
-            border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            transition: background 0.3s;
-        }
-
-        .delete-btn:hover {
-            background: linear-gradient(135deg, #ff5252, #ff0f10);
-        }
-        
-        .setup-btn:hover {
-            transform: translateY(-2px);
-        }
+        /* Keep your existing CSS from camera_list.html here! */
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1a2980, #26d0ce); min-height: 100vh; padding: 20px; }
+        .container { background: white; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); padding: 30px; margin: 0 auto; max-width: 1200px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #e9ecef; }
+        h1 { color: #2c3e50; }
+        .back-btn { padding: 10px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border-radius: 8px; text-decoration: none; font-weight: bold; }
+        .cameras-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+        .camera-card { background: #f8f9fa; border-radius: 10px; padding: 20px; border-left: 5px solid #667eea; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .camera-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #dee2e6; padding-bottom: 10px; }
+        .role-badge { background: #e7f3ff; color: #0d6efd; padding: 4px 8px; border-radius: 4px; font-size: 0.8rem; font-weight: bold; }
+        .action-btns { display: flex; gap: 10px; margin-top: 15px; }
+        .btn { padding: 8px 15px; border: none; border-radius: 5px; cursor: pointer; color: white; font-weight: bold; text-decoration: none; font-size: 0.9rem; text-align: center; flex: 1; }
+        .btn-edit { background: #ffc107; color: #000; }
+        .btn-zones { background: #0dcaf0; color: #000; }
+        .btn-delete { background: #dc3545; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>📹 Camera Management</h1>
+            <h1>📹 Connected Cameras</h1>
             <a href="/" class="back-btn">← Back to Main Menu</a>
         </div>
-        
-        <div id="camerasContainer">
-            <!-- Cameras will be loaded here -->
-        </div>
+        <div id="camerasContainer">Loading...</div>
     </div>
     
     <script>
         async function loadCameras() {
             const container = document.getElementById('camerasContainer');
-            
             try {
-                // Show loading
-                container.innerHTML = '<div class="no-cameras"><p>Loading cameras...</p></div>';
-                
-                const response = await fetch('/api/list-dvrs');
+                const response = await fetch('/api/list-cameras');
                 const result = await response.json();
                 
-                if (result.success && result.dvr_devices.length > 0) {
-                    let html = '';
-                    
-                    result.dvr_devices.forEach(dvr => {
+                if (result.success && result.cameras.length > 0) {
+                    let html = '<div class="cameras-grid">';
+                    result.cameras.forEach(cam => {
                         html += `
-                            <div class="dvr-card">
-                                <div class="dvr-header">
-                                    <div class="dvr-name">${dvr.dvr_name}</div>
-                                    <div style="font-size: 0.9rem; color: #6c757d;">
-                                        ${dvr.channel_count} channel(s)
-                                    </div>
+                            <div class="camera-card">
+                                <div class="camera-header">
+                                    <h3>${cam.camera_name}</h3>
+                                    <span class="role-badge">${cam.camera_role.toUpperCase()}</span>
                                 </div>
-                                
-                                <div class="dvr-info">
-                                    <p><strong>URL:</strong> ${dvr.stream_url}</p>
-                                    <p><strong>Username:</strong> ${dvr.username}</p>
-                                    <p><strong>Password:</strong> ••••••••</p>
-                                    <p><strong>Total Spaces:</strong> ${dvr.total_spaces}</p>
-                                    <p><strong>Created:</strong> ${new Date(dvr.created_at).toLocaleDateString()}</p>
-                                </div>
-                                
-                                <div class="channels-section">
-                                    <h3 style="font-size: 1rem; color: #495057; margin-bottom: 10px;">Channels:</h3>
-                                    <div id="channels-${dvr.id}">
-                                        <p>Loading channels...</p>
-                                    </div>
+                                <p><strong>IP:</strong> ${cam.ip_address || 'Custom'}</p>
+                                <p><strong>Brand:</strong> ${cam.camera_brand || 'N/A'}</p>
+                                <p><strong>Active Zones:</strong> ${cam.total_zones}</p>
+                                <p><strong>Status:</strong> ${cam.is_active ? '🟢 Online' : '🔴 Offline'}</p>
+                                <div class="action-btns">
+                                    <a href="/camera_edit/${cam.id}" class="btn btn-edit">⚙️ Settings</a>
+                                    <a href="/plots_edit/${cam.id}" class="btn btn-zones">📐 Zones</a>
+                                    <button onclick="deleteCamera(${cam.id})" class="btn btn-delete">🗑️</button>
                                 </div>
                             </div>
                         `;
                     });
-                    
-                    container.innerHTML = `<div class="cameras-grid">${html}</div>`;
-                    
-                    // Load channels for each DVR
-                    result.dvr_devices.forEach(dvr => {
-                        loadDvrChannels(dvr.id);
-                    });
-                    
+                    container.innerHTML = html + '</div>';
                 } else {
-                    container.innerHTML = `
-                        <div class="no-cameras">
-                            <h3>No Cameras Found</h3>
-                            <p>You haven't set up any cameras yet.</p>
-                            <a href="/plotting" class="setup-btn">Set up your first camera →</a>
-                        </div>
-                    `;
+                    container.innerHTML = `<h3>No Cameras Found. Add one via Plotting or Gates!</h3>`;
                 }
-                
             } catch (error) {
-                console.error('Error loading cameras:', error);
-                container.innerHTML = `
-                    <div class="no-cameras">
-                        <h3>Error Loading Cameras</h3>
-                        <p>${error.message}</p>
-                    </div>
-                `;
+                container.innerHTML = `<p style="color:red;">Error: ${error.message}</p>`;
             }
         }
         
-        async function loadDvrChannels(dvrId) {
+        async function deleteCamera(id) {
+            if (!confirm("⚠️ Deleting this camera will delete all its Parking Spaces and Gates. Proceed?")) return;
             try {
-                const response = await fetch(`/api/dvr-channels/${dvrId}`);
-                const result = await response.json();
-                
-                if (result.success) {
-                    const container = document.getElementById(`channels-${dvrId}`);
-                    
-                    if (result.channels.length > 0) {
-                        let channelsHtml = '';
-                        
-                        result.channels.forEach(channel => {
-                            channelsHtml += `
-                                <div class="channel-item">
-                                    <div class="channel-header">
-                                        <div class="channel-number">Channel ${channel.channel_number}</div>
-                                        <a href="/camera_edit/${channel.id}" class="edit-btn">✏️ Edit</a>
-                                        <button onclick="deleteChannel(${channel.id}, ${dvrId})" class="delete-btn">🗑️ Delete</button>
-                                    </div>
-                                    <div class="channel-stats">
-                                        <span>Spaces: ${channel.space_count}</span>
-                                        <span>ID: ${channel.id}</span>
-                                    </div>
-                                </div>
-                            `;
-                        });
-                        
-                        container.innerHTML = channelsHtml;
-                    } else {
-                        container.innerHTML = '<p style="color: #6c757d; font-style: italic;">No channels configured</p>';
-                    }
-                }
-            } catch (error) {
-                console.error('Error loading channels:', error);
-                const container = document.getElementById(`channels-${dvrId}`);
-                container.innerHTML = '<p style="color: #dc3545;">Error loading channels</p>';
-            }
-        }
-        async function deleteChannel(channelId) {
-            // Confirm with the user
-            if (!confirm("⚠️ WARNING:\n\nDeleting this channel will permanently remove:\n- All Parking Spaces linked to it\n- The DVR device (if this is the last channel)\n\nAre you sure you want to proceed?")) {
-                return;
-            }
-
-            try {
-                // Call the new API endpoint
-                const response = await fetch(`/api/delete-channel/${channelId}`, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                const result = await response.json();
-
-                if (result.success) {
-                    alert("Deleted Successfully!");
-                    // Refresh the entire list to show that DVR might be gone
-                    loadCameras(); 
-                } else {
-                    alert("Error: " + result.error);
-                }
-
-            } catch (error) {
-                console.error('Error deleting channel:', error);
-                alert("Failed to connect to server.");
-            }
+                const res = await fetch(`/api/delete-camera/${id}`, { method: 'DELETE' });
+                const data = await res.json();
+                if (data.success) { alert("Deleted!"); loadCameras(); } 
+                else { alert("Error: " + data.error); }
+            } catch(e) { alert("Connection failed."); }
         }
         
-        // Load cameras when page loads
         document.addEventListener('DOMContentLoaded', loadCameras);
     </script>
 </body>

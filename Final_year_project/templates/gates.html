@@ -125,42 +125,18 @@
 
             // --- CAPTURE LOGIC (Identical to plotting.html) ---
             async captureFrameFromStream() {
-                const streamUrl = document.getElementById('streamUrl').value;
-                const channel = document.getElementById('channelNumber').value;
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
+                const finalUrl = buildRtspUrl();
+                if (!finalUrl) return alert("Please fill URL details");
                 
-                if (!streamUrl) { alert('Please enter a SmartPSS URL'); return; }
-                
-                this.updateStatus('Connecting to RTSP stream...');
-                
-                try {
-                    const response = await fetch('/capture-frame', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: streamUrl,
-                            channel: parseInt(channel) || 1,
-                            username: username,
-                            password: password
-                        })
-                    });
-                    
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        await this.loadImageFromBase64(result.image);
-                        this.updateStatus('Frame captured! Draw lines to create gates.');
-                    } else {
-                        alert('Capture failed: ' + result.error);
-                        // Optional: Load test image on failure
-                        this.loadTestImage();
-                    }
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Connection failed. Loading test image...');
-                    this.loadTestImage();
-                }
+                this.updateStatus('Connecting...');
+                const response = await fetch('/capture-frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: finalUrl })
+                });
+                const result = await response.json();
+                if (result.success) this.loadImageFromBase64(result.image);
+                else alert('Capture failed: ' + result.error);
             }
 
             // --- DRAWING LOGIC (Adapted for Lines) ---

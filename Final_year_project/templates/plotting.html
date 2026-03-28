@@ -60,14 +60,32 @@
         </div>
         
         <div class="upload-section">
-            <input type="text" id="dvrName" placeholder="DVR Name (e.g., Building_A)">
-            <input type="text" id="streamUrl" placeholder="SmartPSS URL">
-            <input type="number" id="channelNumber" placeholder="Channel" min="1" max="8">
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
+            <input type="text" id="cameraName" placeholder="Camera Name (e.g., Lot A)" style="max-width: 180px;">
+            <select id="cameraBrand" onchange="toggleBrandInputs()" style="padding: 10px; border-radius: 8px; border: 2px solid #667eea; font-weight: bold;">
+                <option value="dahua">Dahua / CP Plus</option>
+                <option value="hikvision">Hikvision</option>
+                <option value="custom">Custom Link</option>
+            </select>
             
-            <button id="captureBtn">Capture Frame</button>
-            <button id="resetBtn">Reset All</button>
+            <div id="standardInputs" style="display: flex; gap: 10px; flex: 1;">
+                <input type="text" id="cameraIp" placeholder="IP (192.168.1.108)">
+                <input type="text" id="rtspPort" placeholder="Port" value="554" style="max-width: 70px;">
+                <input type="number" id="channelNumber" placeholder="CH" min="1" value="1" style="max-width: 60px;">
+                <input type="text" id="username" placeholder="User" value="admin" style="max-width: 90px;">
+                <input type="password" id="password" placeholder="Pass" style="max-width: 100px;">
+            </div>
+            
+            <div id="customInput" style="display: none; flex: 1;">
+                <input type="text" id="customUrl" placeholder="Paste full custom RTSP link here..." style="width: 100%;">
+            </div>
+
+            <select id="spaceTypeInput" style="padding: 10px; border-radius: 8px; font-weight: bold;">
+                <option value="car">🚗 Car Space</option>
+                <option value="bike">🏍️ Bike Space</option>
+            </select>
+            
+            <button id="captureBtn">Capture</button>
+            <button id="resetBtn">Reset</button>
         </div>
         
         <div class="main-content">
@@ -208,12 +226,18 @@
             }
             
             addSpace(rect) {
-                const colors = ['#2ed573', '#1e90ff', '#ff6b81', '#ffa502', '#7bed9f'];
+                const spaceType = document.getElementById('spaceTypeInput').value;
+                
+                // Distinct colors based on vehicle type
+                const color = spaceType === 'car' ? '#1e90ff' : '#ffa502'; // Blue for car, Orange for bike
+                const typeLabel = spaceType === 'car' ? 'Car' : 'Bike';
+
                 const newSpace = {
                     id: Date.now(),
-                    name: `Space ${this.spaces.length + 1}`,
-                    rect: { ...rect }, // Store as internal canvas coordinates
-                    color: colors[this.spaces.length % colors.length]
+                    name: `${typeLabel} Space ${this.spaces.length + 1}`,
+                    type: spaceType, // Add the type here!
+                    rect: { ...rect },
+                    color: color
                 };
                 this.spaces.push(newSpace);
                 this.updateSpacesList();
@@ -319,62 +343,33 @@
             // DATABASE OPERATIONS (SAVE / LOAD)
             // ------------------------------------------------------------------
             async saveToDatabase() {
-                const dvrName = document.getElementById('dvrName').value;
-                const streamUrl = document.getElementById('streamUrl').value;
-                const username = document.getElementById('username').value;
-                const password = document.getElementById('password').value;
-                const channel = parseInt(document.getElementById('channelNumber').value) || 1;
+                const camName = document.getElementById('cameraName').value;
+                const finalUrl = buildRtspUrl();
+                
+                if (!camName || !finalUrl) return alert("Missing Camera Name or URL details!");
+                if (this.spaces.length === 0) return alert("No spaces to save!");
 
-                if (!dvrName) { alert("Please enter DVR Name"); return; }
-                if (this.spaces.length === 0) { alert("No spaces to save"); return; }
-
-                // Prepare data for Python API
                 const payload = {
-                    dvr_name: dvrName,
-                    stream_url: streamUrl,
-                    username: username,
-                    password: password,
-                    channel: channel,
+                    camera_name: camName,
+                    camera_role: 'parking_lot',
+                    camera_brand: document.getElementById('cameraBrand').value,
+                    ip_address: document.getElementById('cameraIp').value,
+                    rtsp_port: document.getElementById('rtspPort').value,
+                    channel: document.getElementById('channelNumber').value,
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value,
+                    stream_url: finalUrl,
                     spaces: this.spaces.map(s => ({
-                        spaceId: s.id,
                         spaceName: s.name,
-                        boundingBox: {
-                            x_min: Math.round(s.rect.x),
-                            y_min: Math.round(s.rect.y),
-                            x_max: Math.round(s.rect.x + s.rect.width),
-                            y_max: Math.round(s.rect.y + s.rect.height),
-                            width: Math.round(s.rect.width),
-                            height: Math.round(s.rect.height)
-                        },
-                        corners: [ // Simple 4 corners
-                            {x: s.rect.x, y: s.rect.y}, 
-                            {x: s.rect.x + s.rect.width, y: s.rect.y},
-                            {x: s.rect.x + s.rect.width, y: s.rect.y + s.rect.height},
-                            {x: s.rect.x, y: s.rect.y + s.rect.height}
-                        ],
-                        color: s.color
+                        spaceType: s.type,
+                        corners: [ {x: s.rect.x, y: s.rect.y}, {x: s.rect.x + s.rect.width, y: s.rect.y}, {x: s.rect.x + s.rect.width, y: s.rect.y + s.rect.height}, {x: s.rect.x, y: s.rect.y + s.rect.height} ],
+                        boundingBox: { x_min: s.rect.x, y_min: s.rect.y, width: s.rect.width, height: s.rect.height } // Quick bounding box flag for app.py
                     }))
                 };
 
-                try {
-                    this.updateStatus("Saving to DB...");
-                    const res = await fetch('/api/save-config', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify(payload)
-                    });
-                    const result = await res.json();
-                    
-                    if(result.success) {
-                        alert("✅ Saved successfully!");
-                        this.updateStatus("Saved to DB.");
-                    } else {
-                        alert("❌ Error: " + result.error);
-                    }
-                } catch(e) {
-                    console.error(e);
-                    alert("Connection failed.");
-                }
+                const res = await fetch('/api/save-config', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+                const result = await res.json();
+                alert(result.success ? "✅ Saved successfully!" : "❌ Error: " + result.error);
             }
             
             async loadFromDatabase() {
@@ -451,35 +446,19 @@
             }
 
             async captureFrameFromStream() {
-                const url = document.getElementById('streamUrl').value;
-                if(!url) { this.loadTestImage(); return; }
+                const finalUrl = buildRtspUrl();
+                if (!finalUrl) return alert("Please fill URL details");
                 
-                this.updateStatus("Capturing...");
-                try {
-                    const res = await fetch('/capture-frame', {
-                        method: 'POST',
-                        headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({
-                            url: url,
-                            channel: document.getElementById('channelNumber').value,
-                            username: document.getElementById('username').value,
-                            password: document.getElementById('password').value
-                        })
-                    });
-                    const data = await res.json();
-                    if(data.success) {
-                        this.loadImage(data.image);
-                        this.updateStatus("Frame Captured.");
-                    } else {
-                        alert("Capture failed: " + data.error);
-                        this.loadTestImage();
-                    }
-                } catch(e) {
-                    console.error(e);
-                    this.loadTestImage();
-                }
+                this.updateStatus('Connecting...');
+                const response = await fetch('/capture-frame', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: finalUrl })
+                });
+                const result = await response.json();
+                if (result.success) this.loadImageFromBase64(result.image);
+                else alert('Capture failed: ' + result.error);
             }
-            
             loadImage(base64) {
                 const img = new Image();
                 img.onload = () => {
@@ -538,6 +517,27 @@
                 this.updateJSONOutput();
                 this.drawImage();
             }
+        }
+        function toggleBrandInputs() {
+            const brand = document.getElementById('cameraBrand').value;
+            document.getElementById('standardInputs').style.display = brand === 'custom' ? 'none' : 'flex';
+            document.getElementById('customInput').style.display = brand === 'custom' ? 'block' : 'none';
+        }
+
+        function buildRtspUrl() {
+            const brand = document.getElementById('cameraBrand').value;
+            if (brand === 'custom') return document.getElementById('customUrl').value;
+            
+            const ip = document.getElementById('cameraIp').value;
+            const port = document.getElementById('rtspPort').value;
+            const user = document.getElementById('username').value;
+            const pass = encodeURIComponent(document.getElementById('password').value);
+            const ch = document.getElementById('channelNumber').value;
+            
+            if(!ip || !user || !pass) return null;
+            
+            if (brand === 'dahua') return `rtsp://${user}:${pass}@${ip}:${port}/cam/realmonitor?channel=${ch}&subtype=1`;
+            if (brand === 'hikvision') return `rtsp://${user}:${pass}@${ip}:${port}/Streaming/Channels/${ch}02`;
         }
         
         // Initialize App
