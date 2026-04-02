@@ -42,13 +42,14 @@ def initialize_database():
         )
     ''')
 
-    # 3. Billing Table
+    # 3. Billing & Tracking Table
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS parking_logs (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             plate_number TEXT NOT NULL,
             plate_vector TEXT,
             vehicle_type TEXT,
+            vehicle_feature_vector TEXT,
             assigned_zone_id INTEGER,
             entry_time TIMESTAMP,
             exit_time TIMESTAMP,  

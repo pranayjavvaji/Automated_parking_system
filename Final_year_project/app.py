@@ -83,7 +83,71 @@ def api_get_camera_channel(camera_channel_id):
         return jsonify({'success': False, 'error': str(e)}), 500
     finally:
         conn.close()
+@app.route('/api/update-camera', methods=['POST'])
+def api_update_camera():
+    """Updates ONLY the camera hardware info without deleting its drawn zones."""
+    data = request.json
+    cam_id = data.get('camera_channel_id')
+    
+    if not cam_id:
+        return jsonify({'success': False, 'error': 'Camera ID is required'}), 400
+        
+    conn = DatabaseHelper.get_db_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute('''
+            UPDATE camera_channels 
+            SET camera_name=?, camera_role=?, camera_brand=?, ip_address=?, rtsp_port=?, channel=?, username=?, password=?, stream_url=? 
+            WHERE id=?
+        ''', (
+            data.get('camera_name'), data.get('camera_role'), data.get('camera_brand'), 
+            data.get('ip_address'), data.get('rtsp_port'), data.get('channel'), 
+            data.get('username'), data.get('password'), data.get('stream_url'), 
+            cam_id
+        ))
+        conn.commit()
+        return jsonify({'success': True, 'message': 'Camera updated successfully'})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        conn.close()
 
+@app.route('/api/get-camera-channel-with-zones/<int:camera_channel_id>')
+def api_get_camera_channel_with_zones(camera_channel_id):
+    """Loads a camera and ALL its drawn zones for the Edit Zones page."""
+    try:
+        conn = DatabaseHelper.get_db_connection()
+        cursor = conn.cursor()
+        
+        cursor.execute('SELECT * FROM camera_channels WHERE id = ?', (camera_channel_id,))
+        camera = cursor.fetchone()
+        
+        if not camera:
+            return jsonify({'success': False, 'error': 'Camera not found'}), 404
+            
+        cursor.execute('SELECT * FROM detection_zones WHERE camera_channel_id = ?', (camera_channel_id,))
+        zones = cursor.fetchall()
+        
+        formatted_zones = []
+        for z in zones:
+            formatted_zones.append({
+                'id': z['id'],
+                'zoneName': z['zone_name'],
+                'shapeType': z['shape_type'],
+                'coordinates': json.loads(z['coordinates']),
+                'isEmpty': z['is_empty']
+            })
+            
+        return jsonify({
+            'success': True,
+            'camera': dict(camera),
+            'zones': formatted_zones
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+    finally:
+        conn.close()
 @app.route('/api/save-config', methods=['POST'])
 def save_config():
     """THE MASTER SAVE FUNCTION: Handles both Parking Spaces AND Gates!"""
