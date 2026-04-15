@@ -98,3 +98,6 @@ if __name__ == "__main__":
     print(f"🔍 Similarity (Car A vs Car B): {match_diff * 100:.2f}% (Expected low %)")
     
     print("\n✅ MODULE TEST COMPLETE. READY FOR PIPELINE.")
+
+    # have to check by giving two images of same object and two images of different objects and check the similarity score. 
+    # also to know if this is working properly or not, we can print the feature vectors and check if they are different for different images and similar for same images.

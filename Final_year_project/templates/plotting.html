@@ -68,11 +68,11 @@
             </select>
             
             <div id="standardInputs" style="display: flex; gap: 10px; flex: 1;">
-                <input type="text" id="cameraIp" placeholder="IP (192.168.1.108)">
-                <input type="text" id="rtspPort" placeholder="Port" value="554" style="max-width: 70px;">
-                <input type="number" id="channelNumber" placeholder="CH" min="1" value="1" style="max-width: 60px;">
-                <input type="text" id="username" placeholder="User" value="admin" style="max-width: 90px;">
-                <input type="password" id="password" placeholder="Pass" style="max-width: 100px;">
+                <input type="text" id="cameraIp" placeholder="IP (192.168.1.108)" value="127.0.0.1">
+                <input type="text" id="rtspPort" placeholder="Port" style="max-width: 70px;">
+                <input type="number" id="channelNumber" placeholder="Channel No" min="1" style="max-width: 60px;">
+                <input type="text" id="username" placeholder="User" style="max-width: 90px;">
+                <input type="password" id="password" placeholder="Password" style="max-width: 100px;">
             </div>
             
             <div id="customInput" style="display: none; flex: 1;">
@@ -226,16 +226,16 @@
             }
             
             addSpace(rect) {
-                const spaceType = document.getElementById('spaceTypeInput').value;
+                const v_type = document.getElementById('spaceTypeInput').value;
                 
                 // Distinct colors based on vehicle type
-                const color = spaceType === 'car' ? '#1e90ff' : '#ffa502'; // Blue for car, Orange for bike
-                const typeLabel = spaceType === 'car' ? 'Car' : 'Bike';
+                const color = v_type === 'car' ? '#1e90ff' : '#ffa502'; // Blue for car, Orange for bike
+                const typeLabel = v_type === 'car' ? 'Car' : 'Bike';
 
                 const newSpace = {
                     id: Date.now(),
                     name: `${typeLabel} Space ${this.spaces.length + 1}`,
-                    type: spaceType, // Add the type here!
+                    vehicle_type: v_type, // Add the type here!
                     rect: { ...rect },
                     color: color
                 };
@@ -328,16 +328,18 @@
             
             updateJSONOutput() {
                 const output = {
-                    dvr_name: document.getElementById('dvrName').value,
+                    camera_name: document.getElementById('cameraName').value, // Fixed 'dvrName' bug
                     spaces_count: this.spaces.length,
                     spaces: this.spaces.map(s => ({
                         id: s.id,
                         name: s.name,
+                        vehicle_type: s.vehicle_type,
                         box: s.rect
                     }))
                 };
                 document.getElementById('jsonOutput').value = JSON.stringify(output, null, 2);
             }
+
             
             // ------------------------------------------------------------------
             // DATABASE OPERATIONS (SAVE / LOAD)
@@ -361,7 +363,7 @@
                     stream_url: finalUrl,
                     spaces: this.spaces.map(s => ({
                         spaceName: s.name,
-                        spaceType: s.type,
+                        vehicleType: s.vehicle_type,
                         corners: [ {x: s.rect.x, y: s.rect.y}, {x: s.rect.x + s.rect.width, y: s.rect.y}, {x: s.rect.x + s.rect.width, y: s.rect.y + s.rect.height}, {x: s.rect.x, y: s.rect.y + s.rect.height} ],
                         boundingBox: { x_min: s.rect.x, y_min: s.rect.y, width: s.rect.width, height: s.rect.height } // Quick bounding box flag for app.py
                     }))
@@ -372,40 +374,56 @@
                 alert(result.success ? "✅ Saved successfully!" : "❌ Error: " + result.error);
             }
             
+            
             async loadFromDatabase() {
-                const dvrName = document.getElementById('dvrName').value;
-                const channel = document.getElementById('channelNumber').value;
+                const camName = document.getElementById('cameraName').value; // Fixed 'dvrName' bug
                 
-                if(!dvrName) { alert("Enter DVR Name to load."); return; }
+                if(!camName) { alert("Enter Camera Name to load."); return; }
                 
                 try {
                     this.updateStatus("Loading from DB...");
                     const res = await fetch('/api/load-config', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ dvr_name: dvrName, channel: channel })
+                        body: JSON.stringify({ camera_name: camName }) // Matches app.py exactly
                     });
                     const result = await res.json();
                     
                     if(result.success) {
-                        // Populate Inputs
-                        if(result.dvr_device) {
-                            document.getElementById('streamUrl').value = result.dvr_device.stream_url || '';
-                            document.getElementById('username').value = result.dvr_device.username || '';
+                        // Populate Camera Hardware Inputs
+                        const cam = result.camera;
+                        if(cam) {
+                            document.getElementById('cameraBrand').value = cam.camera_brand || 'custom';
+                            toggleBrandInputs();
+                            if (cam.camera_brand === 'custom') {
+                                document.getElementById('customUrl').value = cam.stream_url || '';
+                            } else {
+                                document.getElementById('cameraIp').value = cam.ip_address || '';
+                                document.getElementById('rtspPort').value = cam.rtsp_port || '';
+                                document.getElementById('channelNumber').value = cam.channel || 1;
+                                document.getElementById('username').value = cam.username || '';
+                                document.getElementById('password').value = cam.password || '';
+                            }
                         }
                         
-                        // Populate Spaces
-                        this.spaces = (result.spaces || []).map(s => ({
-                            id: s.spaceId,
-                            name: s.spaceName,
-                            color: s.color || '#2ed573',
-                            rect: {
-                                x: s.boundingBox.x_min,
-                                y: s.boundingBox.y_min,
-                                width: s.boundingBox.width,
-                                height: s.boundingBox.height
-                            }
-                        }));
+                        // Populate Spaces geometry
+                        this.spaces = (result.zones || []).map(z => {
+                            // Convert back from the 4-corner SQL array into simple x, y, w, h
+                            const xs = z.coordinates.map(p => p.x);
+                            const ys = z.coordinates.map(p => p.y);
+                            return {
+                                id: z.id,
+                                name: z.zoneName,
+                                color: z.color || '#2ed573',
+                                type: z.shapeType,
+                                rect: {
+                                    x: Math.min(...xs),
+                                    y: Math.min(...ys),
+                                    width: Math.max(...xs) - Math.min(...xs),
+                                    height: Math.max(...ys) - Math.min(...ys)
+                                }
+                            };
+                        });
                         
                         this.updateSpacesList();
                         this.updateJSONOutput();
@@ -456,7 +474,7 @@
                     body: JSON.stringify({ url: finalUrl })
                 });
                 const result = await response.json();
-                if (result.success) this.loadImageFromBase64(result.image);
+                if (result.success) this.loadImage(result.image);
                 else alert('Capture failed: ' + result.error);
             }
             loadImage(base64) {
@@ -536,7 +554,7 @@
             
             if(!ip || !user || !pass) return null;
             
-            if (brand === 'dahua') return `rtsp://${user}:${pass}@${ip}:${port}/cam/realmonitor?channel=${ch}&subtype=1`;
+            if (brand === 'dahua') return `rtsp://${user}:${pass}@${ip}:${port}/cam/realmonitor?channel=${ch}&subtype=0`;
             if (brand === 'hikvision') return `rtsp://${user}:${pass}@${ip}:${port}/Streaming/Channels/${ch}02`;
         }
         

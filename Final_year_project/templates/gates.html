@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gate Setup - Parking System</title>
+    <title>Gate Zone Setup - Parking System</title>
     <style>
-        /* Exact styles from plotting.html */
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); min-height: 100vh; padding: 20px; }
         .container { max-width: 1400px; margin: 0 auto; background: white; border-radius: 15px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden; }
@@ -39,17 +38,37 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚧 Entry/Exit Gate Setup</h1>
+        <h1>🚧 Entry/Exit Gate Zone Setup</h1>
         <div style="text-align: right; margin-bottom: 10px;">
             <a href="/" style="text-decoration: none; color: #1e3c72; font-weight: bold;">← Back to Main Menu</a>
         </div>
         
         <div class="upload-section">
-            <input type="text" id="dvrName" placeholder="DVR Name (e.g., Main_Gate)">
-            <input type="text" id="streamUrl" placeholder="SmartPSS URL">
-            <input type="number" id="channelNumber" placeholder="Channel" min="1" max="8">
-            <input type="text" id="username" placeholder="Username">
-            <input type="password" id="password" placeholder="Password">
+            <input type="text" id="cameraName" placeholder="Camera Name (e.g., Main Gate)" style="max-width: 180px;">
+            <select id="cameraBrand" onchange="toggleBrandInputs()" style="padding: 10px; border-radius: 8px; border: 2px solid #1e3c72; font-weight: bold;">
+                <option value="dahua">Dahua / CP Plus</option>
+                <option value="hikvision">Hikvision</option>
+                <option value="custom">Custom Link</option>
+            </select>
+            
+            <div id="standardInputs" style="display: flex; gap: 10px; flex: 1;">
+                <input type="text" id="cameraIp" placeholder="IP (192.168.1.108)">
+                <input type="text" id="rtspPort" placeholder="Port" value="554" style="max-width: 70px;">
+                <input type="number" id="channelNumber" placeholder="CH" min="1" value="1" style="max-width: 60px;">
+                <input type="text" id="username" placeholder="User" value="admin" style="max-width: 90px;">
+                <input type="password" id="password" placeholder="Pass" style="max-width: 100px;">
+            </div>
+            
+            <div id="customInput" style="display: none; flex: 1;">
+                <input type="text" id="customUrl" placeholder="Paste full custom RTSP link here..." style="width: 100%;">
+            </div>
+
+            <select id="gateDirection" style="padding: 10px; border-radius: 8px; font-weight: bold;">
+                <option value="entry_overview">🟢 Entry Gate (Overview)</option>
+                <option value="entry_lpr">📸 Entry Gate (Plate Reader)</option>
+                <option value="exit_overview">🔴 Exit Gate (Overview)</option>
+                <option value="exit_lpr">📸 Exit Gate (Plate Reader)</option>
+            </select>
             
             <button id="captureBtn">Capture Frame</button>
             <button id="resetBtn">Reset All</button>
@@ -57,8 +76,8 @@
         
         <div class="main-content">
             <div class="image-container">
-                <div class="instructions">
-                    <p>Enter details above, click "Capture Frame", then <b>click and drag</b> to draw counting lines.</p>
+                <div class="instructions" id="instructionText">
+                    <p>Enter details above, click "Capture Frame", then <b>CLICK 4 POINTS</b> to draw a detection zone polygon.</p>
                 </div>
                 <canvas id="imageCanvas"></canvas>
                 <div class="coordinates-display" id="coordinatesDisplay">
@@ -68,12 +87,12 @@
             </div>
             
             <div class="controls">
-                <h3>Active Gates</h3>
+                <h3>Active Zones</h3>
                 <div id="gateList"></div>
                 
                 <div class="output-section">
                     <div class="db-section">
-                        <button id="saveToDbBtn">Save Gates to DB</button>
+                        <button id="saveToDbBtn">Save Zones to DB</button>
                         <button id="loadFromDbBtn" style="background: #17a2b8;">Load from DB</button>
                     </div>
                 </div>
@@ -82,24 +101,41 @@
     </div>
     
     <script>
+        function toggleBrandInputs() {
+            const brand = document.getElementById('cameraBrand').value;
+            document.getElementById('standardInputs').style.display = brand === 'custom' ? 'none' : 'flex';
+            document.getElementById('customInput').style.display = brand === 'custom' ? 'block' : 'none';
+        }
+
+        function buildRtspUrl() {
+            const brand = document.getElementById('cameraBrand').value;
+            if (brand === 'custom') return document.getElementById('customUrl').value;
+            
+            const ip = document.getElementById('cameraIp').value;
+            const port = document.getElementById('rtspPort').value;
+            const user = document.getElementById('username').value;
+            const pass = encodeURIComponent(document.getElementById('password').value);
+            const ch = document.getElementById('channelNumber').value;
+            
+            if(!ip || !user || !pass) return null;
+            
+            if (brand === 'dahua') return `rtsp://${user}:${pass}@${ip}:${port}/cam/realmonitor?channel=${ch}&subtype=1`;
+            if (brand === 'hikvision') return `rtsp://${user}:${pass}@${ip}:${port}/Streaming/Channels/${ch}02`;
+        }
+
         class GateSelector {
             constructor() {
                 this.canvas = document.getElementById('imageCanvas');
                 this.ctx = this.canvas.getContext('2d');
                 this.gates = [];
                 this.currentImage = null;
-                this.imageScale = 1;
-                this.canvasRect = null;
                 
-                // Drawing state
-                this.isDrawing = false;
-                this.startX = 0;
-                this.startY = 0;
-                this.currentX = 0;
-                this.currentY = 0;
+                // 4-Point Polygon State
+                this.currentPoints = [];
+                this.mouseX = 0;
+                this.mouseY = 0;
                 
                 this.initializeEventListeners();
-                window.addEventListener('resize', () => { this.canvasRect = null; });
             }
             
             initializeEventListeners() {
@@ -107,15 +143,17 @@
                     await this.captureFrameFromStream();
                 });
                 
-                this.canvas.addEventListener('mousedown', (e) => this.startDrawing(e));
-                this.canvas.addEventListener('mousemove', (e) => this.drawing(e));
-                this.canvas.addEventListener('mouseup', (e) => this.stopDrawing(e));
+                // New Click-to-Drop-Point logic
+                this.canvas.addEventListener('mousedown', (e) => this.handleClick(e));
+                this.canvas.addEventListener('mousemove', (e) => this.handleMouseMove(e));
                 
                 document.getElementById('resetBtn').addEventListener('click', () => {
-                    if(confirm("Delete all gates?")) {
+                    if(confirm("Delete all zones?")) {
                         this.gates = [];
+                        this.currentPoints = [];
                         this.drawScene();
                         this.updateGateList();
+                        this.updateInstruction();
                     }
                 });
                 
@@ -123,66 +161,67 @@
                 document.getElementById('loadFromDbBtn').addEventListener('click', () => this.loadFromDatabase());
             }
 
-            // --- CAPTURE LOGIC (Identical to plotting.html) ---
             async captureFrameFromStream() {
                 const finalUrl = buildRtspUrl();
                 if (!finalUrl) return alert("Please fill URL details");
                 
                 this.updateStatus('Connecting...');
-                const response = await fetch('/capture-frame', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: finalUrl })
-                });
-                const result = await response.json();
-                if (result.success) this.loadImageFromBase64(result.image);
-                else alert('Capture failed: ' + result.error);
+                try {
+                    const response = await fetch('/capture-frame', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ url: finalUrl })
+                    });
+                    const result = await response.json();
+                    if (result.success) this.loadImage(result.image);
+                    else alert('Capture failed: ' + result.error);
+                } catch(e) {
+                    alert('Connection Failed');
+                }
             }
 
-            // --- DRAWING LOGIC (Adapted for Lines) ---
-            startDrawing(e) {
-                if (!this.currentImage) { alert('Please capture a frame first'); return; }
+            // ------------------------------------------------------------------
+            // DRAWING LOGIC (The 4-Point Polygon)
+            // ------------------------------------------------------------------
+            handleClick(e) {
+                if (!this.currentImage) return alert('Please capture a frame first');
+                
                 const coords = this.getCanvasCoordinates(e);
-                this.startX = coords.canvasX;
-                this.startY = coords.canvasY;
-                this.isDrawing = true;
-            }
-            
-            drawing(e) {
-                if (!this.isDrawing) return;
-                const coords = this.getCanvasCoordinates(e);
-                this.currentX = coords.canvasX;
-                this.currentY = coords.canvasY;
-                this.drawScene(); // Redraw image + existing gates
+                this.currentPoints.push({ x: Math.round(coords.canvasX), y: Math.round(coords.canvasY) });
                 
-                // Draw Preview Line
-                this.ctx.beginPath();
-                this.ctx.moveTo(this.startX, this.startY);
-                this.ctx.lineTo(this.currentX, this.currentY);
-                this.ctx.strokeStyle = 'yellow';
-                this.ctx.lineWidth = 4;
-                this.ctx.stroke();
-            }
-            
-            stopDrawing(e) {
-                if (!this.isDrawing) return;
-                this.isDrawing = false;
-                
-                // Calculate length to avoid tiny clicks
-                const dist = Math.hypot(this.currentX - this.startX, this.currentY - this.startY);
-                
-                if (dist > 20) {
-                    const name = prompt("Enter Gate Name (e.g., Entry, Exit):", "Gate " + (this.gates.length + 1));
+                if (this.currentPoints.length === 4) {
+                    // Polygon finished!
+                    const name = prompt("Enter Zone Name (e.g., Entry Trigger):", "Zone " + (this.gates.length + 1));
                     if(name) {
                         this.gates.push({
                             name: name,
-                            line: [Math.round(this.startX), Math.round(this.startY), Math.round(this.currentX), Math.round(this.currentY)],
-                            direction: 'both'
+                            points: [...this.currentPoints]
                         });
                         this.updateGateList();
                     }
+                    this.currentPoints = []; // Reset for next polygon
                 }
+                
+                this.updateInstruction();
                 this.drawScene();
+            }
+            
+            handleMouseMove(e) {
+                if (this.currentPoints.length > 0 && this.currentPoints.length < 4) {
+                    const coords = this.getCanvasCoordinates(e);
+                    this.mouseX = coords.canvasX;
+                    this.mouseY = coords.canvasY;
+                    this.drawScene();
+                }
+            }
+            
+            updateInstruction() {
+                const textObj = document.getElementById('instructionText');
+                if (this.currentPoints.length === 0) {
+                    textObj.innerHTML = `<p>Click <b>4 points</b> on the image to draw a Detection Zone.</p>`;
+                } else {
+                    textObj.innerHTML = `<p style="color: #ff9800; font-weight: bold;">Point ${this.currentPoints.length} set. Click ${4 - this.currentPoints.length} more times...</p>`;
+                }
             }
 
             drawScene() {
@@ -191,30 +230,56 @@
                 this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
                 this.ctx.drawImage(this.currentImage, 0, 0, this.currentImage.width, this.currentImage.height, 0, 0, this.canvas.width, this.canvas.height);
                 
+                // Draw finished gates
                 this.gates.forEach(g => {
-                    const [x1, y1, x2, y2] = g.line;
+                    this.drawPolygon(g.points, '#2196f3', g.name, true);
+                });
+                
+                // Draw in-progress polygon
+                if (this.currentPoints.length > 0) {
+                    // Create a temporary array that includes the current mouse position
+                    const previewPoints = [...this.currentPoints, {x: this.mouseX, y: this.mouseY}];
+                    this.drawPolygon(previewPoints, '#ff9800', null, false);
                     
-                    // Draw Line
-                    this.ctx.beginPath();
-                    this.ctx.moveTo(x1, y1);
-                    this.ctx.lineTo(x2, y2);
-                    this.ctx.strokeStyle = '#2196f3';
-                    this.ctx.lineWidth = 5;
-                    this.ctx.stroke();
-                    
-                    // Draw Dots at ends
-                    this.ctx.fillStyle = 'red';
-                    this.ctx.beginPath(); this.ctx.arc(x1, y1, 6, 0, Math.PI*2); this.ctx.fill();
-                    this.ctx.beginPath(); this.ctx.arc(x2, y2, 6, 0, Math.PI*2); this.ctx.fill();
-                    
-                    // Draw Name
+                    // Draw dots on the clicked points
+                    this.ctx.fillStyle = '#ff9800';
+                    this.currentPoints.forEach(pt => {
+                        this.ctx.beginPath();
+                        this.ctx.arc(pt.x, pt.y, 5, 0, Math.PI*2);
+                        this.ctx.fill();
+                    });
+                }
+            }
+            
+            drawPolygon(pts, color, name, isFinished) {
+                if (pts.length === 0) return;
+                
+                this.ctx.beginPath();
+                this.ctx.moveTo(pts[0].x, pts[0].y);
+                for(let i = 1; i < pts.length; i++) {
+                    this.ctx.lineTo(pts[i].x, pts[i].y);
+                }
+                
+                if (isFinished) {
+                    this.ctx.closePath();
+                    // Add semi-transparent fill
+                    this.ctx.fillStyle = color + "44"; // Hex alpha
+                    this.ctx.fill();
+                }
+                
+                this.ctx.strokeStyle = color;
+                this.ctx.lineWidth = 3;
+                this.ctx.stroke();
+                
+                // Draw text label on first point
+                if (name && isFinished) {
                     this.ctx.fillStyle = 'white';
                     this.ctx.font = 'bold 16px Arial';
-                    this.ctx.strokeStyle = 'black';
                     this.ctx.lineWidth = 3;
-                    this.ctx.strokeText(g.name, x1, y1 - 10);
-                    this.ctx.fillText(g.name, x1, y1 - 10);
-                });
+                    this.ctx.strokeStyle = 'black';
+                    this.ctx.strokeText(name, pts[0].x, pts[0].y - 10);
+                    this.ctx.fillText(name, pts[0].x, pts[0].y - 10);
+                }
             }
 
             updateGateList() {
@@ -227,59 +292,98 @@
                                 <h4>${g.name}</h4>
                                 <button class="delete-btn" onclick="app.removeGate(${idx})">🗑️</button>
                             </div>
-                            <p>Coords: (${g.line[0]},${g.line[1]}) to (${g.line[2]},${g.line[3]})</p>
+                            <p style="font-size: 12px; color: #666;">Points: 4 coordinates saved.</p>
                         </div>
                     `;
                 });
             }
 
             removeGate(idx) {
-                if(confirm("Remove this gate?")) {
+                if(confirm("Remove this zone?")) {
                     this.gates.splice(idx, 1);
                     this.updateGateList();
                     this.drawScene();
                 }
             }
 
-            // --- DATABASE ---
+            // --- DATABASE INTEGRATION ---
             async saveToDatabase() {
-                const dvr = document.getElementById('dvrName').value;
-                if(!dvr) return alert("Enter DVR Name!");
+                const camName = document.getElementById('cameraName').value;
+                const finalUrl = buildRtspUrl(); 
                 
+                if (!camName || !finalUrl) return alert("Missing Camera Name or URL!");
+                if (this.gates.length === 0) return alert("Draw at least one zone!");
+
+                const payload = {
+                    camera_name: camName,
+                    camera_role: document.getElementById('gateDirection').value,
+                    camera_brand: document.getElementById('cameraBrand').value,
+                    ip_address: document.getElementById('cameraIp').value,
+                    rtsp_port: document.getElementById('rtspPort').value,
+                    channel: document.getElementById('channelNumber').value,
+                    username: document.getElementById('username').value,
+                    password: document.getElementById('password').value,
+                    stream_url: finalUrl,
+                    // Save the array of points instead of a single line
+                    gates: this.gates.map(g => ({
+                        spaceName: g.name,
+                        points: g.points
+                    }))
+                };
+
                 try {
-                    const res = await fetch('/api/save-gates', {
+                    const res = await fetch('/api/save-config', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ dvr_name: dvr, gates: this.gates })
+                        body: JSON.stringify(payload)
                     });
                     const data = await res.json();
-                    alert(data.success ? "Saved Successfully!" : "Error: " + data.error);
-                } catch(e) { console.error(e); alert("Save failed"); }
+                    alert(data.success ? "Zones Saved Successfully!" : "Error: " + data.error);
+                } catch(e) { alert("Save failed"); }
             }
 
             async loadFromDatabase() {
-                const dvr = document.getElementById('dvrName').value;
-                if(!dvr) return alert("Enter DVR Name!");
+                const camName = document.getElementById('cameraName').value;
+                if(!camName) return alert("Enter Camera Name to load!");
 
                 try {
-                    const res = await fetch('/api/load-gates', {
+                    const res = await fetch('/api/load-config', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ dvr_name: dvr })
+                        body: JSON.stringify({ camera_name: camName })
                     });
                     const data = await res.json();
                     if(data.success) {
-                        this.gates = data.gates;
+                        const cam = data.camera;
+                        if(cam) {
+                            document.getElementById('cameraBrand').value = cam.camera_brand || 'custom';
+                            toggleBrandInputs();
+                            if (cam.camera_brand === 'custom') {
+                                document.getElementById('customUrl').value = cam.stream_url || '';
+                            } else {
+                                document.getElementById('cameraIp').value = cam.ip_address || '';
+                                document.getElementById('rtspPort').value = cam.rtsp_port || '';
+                                document.getElementById('channelNumber').value = cam.channel || 1;
+                                document.getElementById('username').value = cam.username || '';
+                                document.getElementById('password').value = cam.password || '';
+                            }
+                        }
+
+                        // Restore 4-point polygon zones
+                        this.gates = (data.zones || []).map(z => ({
+                            name: z.zoneName,
+                            points: z.coordinates || []
+                        }));
+                        
                         this.updateGateList();
                         this.drawScene();
-                        this.updateStatus(`Loaded ${this.gates.length} gates.`);
+                        this.updateStatus(`Loaded ${this.gates.length} zones.`);
                     } else {
                         alert("Error loading: " + data.error);
                     }
-                } catch(e) { console.error(e); alert("Load failed"); }
+                } catch(e) { alert("Load failed"); }
             }
 
-            // --- HELPERS (Same as plotting.html) ---
             updateStatus(msg) { document.getElementById('coordinatesDisplay').innerHTML = `<h4>Status:</h4><div class="point-coord">${msg}</div>`; }
             
             getCanvasCoordinates(e) {
@@ -292,13 +396,14 @@
                 };
             }
 
-            async loadImageFromBase64(base64String) {
+            async loadImage(base64String) {
                 return new Promise((resolve) => {
                     const img = new Image();
                     img.onload = () => {
                         this.currentImage = img;
                         this.fitCanvasToImage(img);
                         this.drawScene();
+                        this.updateStatus('Frame ready. Click 4 points to draw.');
                         resolve();
                     };
                     img.src = `data:image/jpeg;base64,${base64String}`;
@@ -319,15 +424,6 @@
                 this.canvas.width = img.width;
                 this.canvas.height = img.height;
                 setTimeout(() => this.drawScene(), 50);
-            }
-
-            loadTestImage() {
-                const c = document.createElement('canvas');
-                c.width = 1280; c.height = 720;
-                const cx = c.getContext('2d');
-                cx.fillStyle = "#333"; cx.fillRect(0,0,1280,720);
-                cx.fillStyle = "white"; cx.font="40px Arial"; cx.fillText("TEST MODE", 500, 360);
-                this.loadImageFromBase64(c.toDataURL().split(',')[1]);
             }
         }
         

@@ -5,236 +5,43 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Camera - Parking System</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        
-        body {
-            background: linear-gradient(135deg, #1a2980, #26d0ce);
-            min-height: 100vh;
-            padding: 20px;
-        }
-        
-        .container {
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-            padding: 30px;
-            margin: 0 auto;
-            max-width: 800px;
-        }
-        
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #e9ecef;
-        }
-        
-        h1 {
-            color: #2c3e50;
-            font-size: 2rem;
-        }
-        .plots-edit-btn {
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: bold;
-            text-decoration: none;
-            text-align: center;
-            transition: transform 0.2s;
-            display: inline-block;
-        }
-
-        .plots-edit-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
-        }
-        
-        .back-btn {
-            padding: 10px 20px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            text-decoration: none;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        
-        .back-btn:hover {
-            background: #5a6268;
-        }
-        
-        .form-group {
-            margin-bottom: 20px;
-        }
-        
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #495057;
-        }
-        
-        .form-group input {
-            width: 100%;
-            padding: 12px 15px;
-            border: 2px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s;
-        }
-        
-        .form-group input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
-        }
-        
-        .form-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-        
-        .form-row .form-group {
-            flex: 1;
-            margin-bottom: 0;
-        }
-        
-        .buttons {
-            display: flex;
-            gap: 15px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #e9ecef;
-        }
-        
-        .save-btn {
-            flex: 1;
-            padding: 15px;
-            background: linear-gradient(135deg, #2ecc71, #27ae60);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: transform 0.2s;
-        }
-        
-        .save-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3);
-        }
-        
-        .cancel-btn {
-            flex: 1;
-            padding: 15px;
-            background: #6c757d;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: background 0.3s;
-        }
-        
-        .cancel-btn:hover {
-            background: #5a6268;
-        }
-        
-        .delete-btn {
-            padding: 10px 20px;
-            background: linear-gradient(135deg, #e74c3c, #c0392b);
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: bold;
-            margin-left: 10px;
-        }
-        
-        .delete-btn:hover {
-            background: linear-gradient(135deg, #c0392b, #a93226);
-        }
-        
-        .message {
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
-        }
-        
-        .success {
-            background: #d4edda;
-            color: #155724;
-            border: 1px solid #c3e6cb;
-        }
-        
-        .error {
-            background: #f8d7da;
-            color: #721c24;
-            border: 1px solid #f5c6cb;
-        }
-        
-        .loading {
-            text-align: center;
-            padding: 50px;
-            color: #6c757d;
-        }
-        
-        .spaces-info {
-            background: #f8f9fa;
-            border-radius: 8px;
-            padding: 20px;
-            margin-top: 20px;
-        }
-        
-        .spaces-info h3 {
-            color: #495057;
-            margin-bottom: 10px;
-        }
-        
-        .spaces-list {
-            list-style: none;
-            margin-top: 10px;
-        }
-        
-        .spaces-list li {
-            padding: 8px;
-            background: white;
-            margin-bottom: 5px;
-            border-radius: 4px;
-            border-left: 3px solid #667eea;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: linear-gradient(135deg, #1a2980, #26d0ce); min-height: 100vh; padding: 20px; }
+        .container { background: white; border-radius: 15px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); padding: 30px; margin: 0 auto; max-width: 800px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; padding-bottom: 15px; border-bottom: 2px solid #e9ecef; }
+        h1 { color: #2c3e50; font-size: 2rem; }
+        .plots-edit-btn { padding: 15px 20px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; text-decoration: none; text-align: center; transition: transform 0.2s; display: inline-block; }
+        .plots-edit-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3); }
+        .back-btn { padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; text-decoration: none; font-weight: bold; transition: background 0.3s; }
+        .back-btn:hover { background: #5a6268; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 600; color: #495057; }
+        .form-group input, .form-group select { width: 100%; padding: 12px 15px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1rem; transition: border-color 0.3s; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2); }
+        .form-row { display: flex; gap: 15px; margin-bottom: 20px; }
+        .form-row .form-group { flex: 1; margin-bottom: 0; }
+        .buttons { display: flex; gap: 15px; margin-top: 30px; padding-top: 20px; border-top: 2px solid #e9ecef; }
+        .save-btn { flex: 1; padding: 15px; background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: transform 0.2s; }
+        .save-btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(39, 174, 96, 0.3); }
+        .cancel-btn { flex: 1; padding: 15px; background: #6c757d; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: background 0.3s; }
+        .cancel-btn:hover { background: #5a6268; }
+        .message { padding: 15px; border-radius: 8px; margin-bottom: 20px; display: none; }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .loading { text-align: center; padding: 50px; color: #6c757d; }
+        .spaces-info { background: #f8f9fa; border-radius: 8px; padding: 20px; margin-top: 20px; border-left: 5px solid #667eea; }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>✏️ Edit Camera</h1>
+            <h1>⚙️ Edit Camera Settings</h1>
             <a href="/cameras" class="back-btn">← Back to Cameras</a>
         </div>
         
         <div id="message" class="message"></div>
-        
         <div id="content">
-            <div class="loading">
-                <p>Loading camera information...</p>
-            </div>
+            <div class="loading"><p>Loading camera information...</p></div>
         </div>
     </div>
     
@@ -245,136 +52,148 @@
             const cameraChannelId = urlParts[urlParts.length - 1];
             
             if (!cameraChannelId || isNaN(cameraChannelId)) {
-                contentDiv.innerHTML = `
-                    <div class="error" style="padding: 20px;">
-                        <h3>Invalid Camera ID</h3>
-                        <p>Camera channel ID is not valid.</p>
-                    </div>
-                `;
+                contentDiv.innerHTML = `<div class="error" style="padding: 20px;"><h3>Invalid Camera ID</h3></div>`;
                 return;
             }
             
             try {
-                // Get camera channel details
                 const response = await fetch(`/api/get-camera-channel/${cameraChannelId}`);
                 const result = await response.json();
                 
                 if (result.success) {
-                    const camera = result.camera_channel;
+                    const cam = result.camera_channel || result.camera; // Handles multiple generic python returns
                     
-                    // Create edit form
+                    // Conditionally show zones button based on role
+                    let zonesHtml = '';
+                    if (cam.camera_role === 'parking_lot') {
+                        zonesHtml = `
+                            <div class="spaces-info">
+                                <h3>Parking Spaces</h3>
+                                <p>This camera manages your parking spaces.</p>
+                                <a href="/plots_edit/${cameraChannelId}" class="plots-edit-btn" style="margin-top: 10px;">📐 Edit Parking Spaces</a>
+                            </div>`;
+                    } else {
+                        zonesHtml = `
+                            <div class="spaces-info" style="border-left-color: #ff9800;">
+                                <h3>Gate Zones</h3>
+                                <p>This camera manages a Gate. Zones are managed in the <a href="/gates">Gate Setup</a> page.</p>
+                            </div>`;
+                    }
+                    
                     contentDiv.innerHTML = `
                         <form id="editForm">
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="dvrName">DVR Name *</label>
-                                    <input type="text" id="dvrName" value="${camera.dvr_name}" required>
+                                    <label for="cameraName">Camera Name *</label>
+                                    <input type="text" id="cameraName" value="${cam.camera_name}" required>
                                 </div>
                                 <div class="form-group">
-                                    <label for="channelNumber">Channel Number *</label>
-                                    <input type="number" id="channelNumber" value="${camera.channel_number}" min="1" max="32" required>
+                                    <label for="cameraRole">Camera Role *</label>
+                                    <select id="cameraRole" required>
+                                        <option value="parking_lot" ${cam.camera_role === 'parking_lot' ? 'selected' : ''}>Parking Lot</option>
+                                        <option value="entry_overview" ${cam.camera_role === 'entry_overview' ? 'selected' : ''}>Entry Gate (Overview)</option>
+                                        <option value="entry_lpr" ${cam.camera_role === 'entry_lpr' ? 'selected' : ''}>Entry Gate (Plate Reader)</option>
+                                        <option value="exit_overview" ${cam.camera_role === 'exit_overview' ? 'selected' : ''}>Exit Gate (Overview)</option>
+                                        <option value="exit_lpr" ${cam.camera_role === 'exit_lpr' ? 'selected' : ''}>Exit Gate (Plate Reader)</option>
+                                    </select>
                                 </div>
                             </div>
-                            
-                            <div class="form-group">
-                                <label for="streamUrl">Stream URL *</label>
-                                <input type="text" id="streamUrl" value="${camera.stream_url}" required>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="cameraBrand">Brand *</label>
+                                    <select id="cameraBrand" required>
+                                        <option value="dahua" ${cam.camera_brand === 'dahua' ? 'selected' : ''}>Dahua / CP Plus</option>
+                                        <option value="hikvision" ${cam.camera_brand === 'hikvision' ? 'selected' : ''}>Hikvision</option>
+                                        <option value="custom" ${cam.camera_brand === 'custom' ? 'selected' : ''}>Custom RTSP</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="ipAddress">IP Address</label>
+                                    <input type="text" id="ipAddress" value="${cam.ip_address || ''}">
+                                </div>
                             </div>
                             
                             <div class="form-row">
                                 <div class="form-group">
-                                    <label for="username">Username *</label>
-                                    <input type="text" id="username" value="${camera.username}" required>
+                                    <label for="rtspPort">RTSP Port</label>
+                                    <input type="text" id="rtspPort" value="${cam.rtsp_port || ''}">
                                 </div>
                                 <div class="form-group">
-                                    <label for="password">Password *</label>
-                                    <input type="password" id="password" value="${camera.password}" required>
+                                    <label for="channelNumber">Channel</label>
+                                    <input type="number" id="channelNumber" value="${cam.channel || 1}">
                                 </div>
                             </div>
                             
-                            <div class="spaces-info">
-                                <h3>Parking Spaces</h3>
-                                <p>This channel has <strong>${result.spaces_count}</strong> parking spaces configured.</p>
-                                <p><small>To edit parking spaces, click the "Edit Parking Spaces" button below.</small></p>s
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="username">Username</label>
+                                    <input type="text" id="username" value="${cam.username || ''}">
+                                </div>
+                                <div class="form-group">
+                                    <label for="password">Password</label>
+                                    <input type="password" id="password" value="${cam.password || ''}">
+                                </div>
                             </div>
+                            
+                            <div class="form-group">
+                                <label for="streamUrl">Full RTSP Stream URL *</label>
+                                <input type="text" id="streamUrl" value="${cam.stream_url}" required>
+                            </div>
+                            
+                            ${zonesHtml}
                             
                             <div class="buttons">
                                 <button type="submit" class="save-btn">💾 Save Changes</button>
                                 <button type="button" class="cancel-btn" onclick="window.location.href='/cameras'">Cancel</button>
-                                    <a href="/plots_edit/${cameraChannelId}" class="plots-edit-btn">
-                                        🖼️ Edit Parking Spaces
-                                    </a>
                             </div>
                         </form>
                     `;
                     
-                    // Add form submit event listener
                     document.getElementById('editForm').addEventListener('submit', handleSave);
                     
                 } else {
-                    contentDiv.innerHTML = `
-                        <div class="error" style="padding: 20px;">
-                            <h3>Camera Not Found</h3>
-                            <p>${result.error || 'The requested camera channel was not found.'}</p>
-                            <a href="/cameras" class="back-btn" style="display: inline-block; margin-top: 10px;">Back to Cameras</a>
-                        </div>
-                    `;
+                    contentDiv.innerHTML = `<div class="error" style="padding: 20px;"><h3>Camera Not Found</h3></div>`;
                 }
-                
             } catch (error) {
-                console.error('Error loading camera:', error);
-                contentDiv.innerHTML = `
-                    <div class="error" style="padding: 20px;">
-                        <h3>Error Loading Camera</h3>
-                        <p>${error.message}</p>
-                    </div>
-                `;
+                contentDiv.innerHTML = `<div class="error" style="padding: 20px;"><h3>Error Loading</h3><p>${error.message}</p></div>`;
             }
         }
         
         async function handleSave(e) {
             e.preventDefault();
-            
-            const messageDiv = document.getElementById('message');
             const urlParts = window.location.pathname.split('/');
             const cameraChannelId = urlParts[urlParts.length - 1];
             
             const formData = {
-                camera_channel_id: parseInt(cameraChannelId),
-                dvr_name: document.getElementById('dvrName').value,
-                channel_number: parseInt(document.getElementById('channelNumber').value),
-                stream_url: document.getElementById('streamUrl').value,
+                id: parseInt(cameraChannelId),
+                camera_name: document.getElementById('cameraName').value,
+                camera_role: document.getElementById('cameraRole').value,
+                camera_brand: document.getElementById('cameraBrand').value,
+                ip_address: document.getElementById('ipAddress').value,
+                rtsp_port: document.getElementById('rtspPort').value,
+                channel: parseInt(document.getElementById('channelNumber').value),
                 username: document.getElementById('username').value,
-                password: document.getElementById('password').value
+                password: document.getElementById('password').value,
+                stream_url: document.getElementById('streamUrl').value
             };
             
-            // Validation
-            if (!formData.dvr_name || !formData.stream_url || !formData.username || !formData.password) {
-                showMessage('Please fill in all required fields.', 'error');
-                return;
-            }
-            
             try {
-                const response = await fetch('/api/update-camera', {
+                // Ensure your app.py is expecting this route and these exact JSON keys!
+                const response = await fetch('/api/update-camera-details', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(formData)
                 });
                 
                 const result = await response.json();
-                
                 if (result.success) {
-                    showMessage('Camera information updated successfully!', 'success');
-                    // Refresh data
-                    setTimeout(() => loadCameraData(), 1500);
+                    showMessage('Camera updated successfully!', 'success');
+                    setTimeout(() => window.location.href = '/cameras', 1500);
                 } else {
                     showMessage(`Error: ${result.error}`, 'error');
                 }
-                
             } catch (error) {
-                console.error('Error saving camera:', error);
                 showMessage(`Error saving changes: ${error.message}`, 'error');
             }
         }
@@ -384,16 +203,9 @@
             messageDiv.textContent = text;
             messageDiv.className = `message ${type}`;
             messageDiv.style.display = 'block';
-            
-            // Auto-hide success messages
-            if (type === 'success') {
-                setTimeout(() => {
-                    messageDiv.style.display = 'none';
-                }, 3000);
-            }
+            if (type === 'success') setTimeout(() => messageDiv.style.display = 'none', 3000);
         }
         
-        // Load data when page loads
         document.addEventListener('DOMContentLoaded', loadCameraData);
     </script>
 </body>

@@ -1,4 +1,7 @@
 import os
+
+# 🟢 CRITICAL TCP FIX: This MUST happen before cv2 is imported anywhere!
+os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;tcp"
 import cv2
 import numpy as np
 import sqlite3
@@ -9,7 +12,6 @@ from flask import Flask, Response, request, jsonify, render_template
 import base64
 import io
 
-# Import your unified database and camera modules
 from database import initialize_database, DatabaseHelper
 from final_cam_video import SmartPSSViewer
 
@@ -19,7 +21,7 @@ BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 DB_PATH = os.path.join(BASE_DIR, 'parking_system.db')
 
 # ==========================================
-# 🌐 HTML PAGE ROUTES
+# HTML PAGE ROUTES
 # ==========================================
 @app.route('/')
 def index(): return render_template('index.html')
@@ -135,6 +137,7 @@ def api_get_camera_channel_with_zones(camera_channel_id):
                 'id': z['id'],
                 'zoneName': z['zone_name'],
                 'shapeType': z['shape_type'],
+                'vehicle_type': z['vehicle_type'],
                 'coordinates': json.loads(z['coordinates']),
                 'isEmpty': z['is_empty']
             })
@@ -190,6 +193,7 @@ def save_config():
         
         for zone in zones:
             zone_name = zone.get('spaceName') or zone.get('name') or 'Unnamed Zone'
+            v_type = zone.get('vehicle_type', 'car')
             
             # Auto-detect if this is a Box (Parking) or a Line (Gate)
             if 'boundingBox' in zone:
@@ -200,9 +204,9 @@ def save_config():
                 coords = json.dumps(zone['line'])
 
             cursor.execute('''
-                INSERT INTO detection_zones (camera_channel_id, zone_name, shape_type, coordinates, is_empty)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (cam_id, zone_name, shape_type, coords, 1))
+                INSERT INTO detection_zones (camera_channel_id, zone_name, shape_type, vehicle_type, coordinates, is_empty)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (cam_id, zone_name, shape_type, v_type, coords, 1))
             
         conn.commit()
         return jsonify({'success': True, 'zones_saved': len(zones)})
@@ -234,6 +238,7 @@ def load_config():
                 'id': z['id'], 
                 'zoneName': z['zone_name'], 
                 'shapeType': z['shape_type'],
+                'vehicle_type': z['vehicle_type'],
                 'coordinates': json.loads(z['coordinates']), 
                 'isEmpty': z['is_empty']
             })
@@ -343,3 +348,7 @@ if __name__ == '__main__':
     health_thread = threading.Thread(target=verify_all_cameras, daemon=True)
     health_thread.start()
     app.run(host="0.0.0.0", debug=True, port=5000)
+
+    # have to  check this and find if  eveything is working properly or not.
+    # have to make sure that eveything is been placed in order so its easy to transvers in the code ( like all html rendering templates at the same place, and api requests of some unique htmls at the same place and also all the database related code at the same place) this will help us to maintain the code better and also to debug the code if we face any issues in future. also have to make sure that we are following the best practices while writing the code and also we are following the standard coding conventions. this will help us to write better code and also to maintain the code better in future. also have to make sure that we are using the right data structures and algorithms while writing the code this will help us to write efficient code and also to maintain the code better in future. also have to make sure that we are using the right libraries and frameworks while writing the code this will help us to write better code and also to maintain the code better in future. also have to make sure that we are testing our code properly before deploying it this will help us to find any bugs or issues in our code before deploying it and also it will help us to write better code in future. also have to make sure that we are documenting our code properly this will help us to understand our code better and also it will help us to maintain our code better in future. also have to make sure that we are using version control system like git this will help us to keep track of our changes and also it will help us to collaborate with other developers better in future.
+    

@@ -35,6 +35,7 @@ def initialize_database():
             camera_channel_id INTEGER NOT NULL,
             zone_name TEXT NOT NULL,     
             shape_type TEXT DEFAULT 'box',
+            vehicle_type TEXT,
             coordinates TEXT NOT NULL,     
             is_empty INTEGER DEFAULT 1,    
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

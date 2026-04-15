@@ -41,6 +41,16 @@
                 if (result.success && result.cameras.length > 0) {
                     let html = '<div class="cameras-grid">';
                     result.cameras.forEach(cam => {
+                        
+                        // 🧠 SMART UI LOGIC: Only show zones info/button if it's a parking lot
+                        let zonesInfo = '';
+                        let zonesBtn = '';
+                        
+                        if (cam.camera_role === 'parking_lot') {
+                            zonesInfo = `<p><strong>Active Spaces:</strong> ${cam.total_zones}</p>`;
+                            zonesBtn = `<a href="/plots_edit/${cam.id}" class="btn btn-zones">📐 Zones</a>`;
+                        }
+
                         html += `
                             <div class="camera-card">
                                 <div class="camera-header">
@@ -49,12 +59,10 @@
                                 </div>
                                 <p><strong>IP:</strong> ${cam.ip_address || 'Custom'}</p>
                                 <p><strong>Brand:</strong> ${cam.camera_brand || 'N/A'}</p>
-                                <p><strong>Active Zones:</strong> ${cam.total_zones}</p>
-                                <p><strong>Status:</strong> ${cam.is_active ? '🟢 Online' : '🔴 Offline'}</p>
+                                ${zonesInfo} <p><strong>Status:</strong> ${cam.is_active ? '🟢 Online' : '🔴 Offline'}</p>
                                 <div class="action-btns">
                                     <a href="/camera_edit/${cam.id}" class="btn btn-edit">⚙️ Settings</a>
-                                    <a href="/plots_edit/${cam.id}" class="btn btn-zones">📐 Zones</a>
-                                    <button onclick="deleteCamera(${cam.id})" class="btn btn-delete">🗑️</button>
+                                    ${zonesBtn} <button onclick="deleteCamera(${cam.id})" class="btn btn-delete">🗑️</button>
                                 </div>
                             </div>
                         `;
